@@ -43,6 +43,8 @@ Automatic selection is Kokoro → Piper → espeak. Configure provider details e
 PIPER_MODEL=/path/to/es_ES-model.onnx .aitutorial/aitutorial produce session-1 --voice piper
 ```
 
+If Piper lives in an isolated environment rather than on `PATH`, set `PIPER_BIN=/path/to/piper` as well. The model path is included in the audio cache key.
+
 Provider, voice, model, and text are part of every cache key, so one changed segment does not regenerate the rest. Kokoro CLI packaging is not standardized; this MVP expects `kokoro --voice <voice> --output <file> [--model <path>] <text>`. Piper uses its standard stdin interface.
 
 ElevenLabs is optional. Keep the key only in `ELEVENLABS_API_KEY`. The first command intentionally fails after displaying provider/model/voice, new and cached segments, characters/estimated credits, cost availability, and an exact manifest hash. Only an explicit rerun with `--approve-manifest <hash>` authorizes that unchanged batch. CI cannot preapprove future batches.
@@ -69,7 +71,7 @@ npm ci
 npm run check
 ```
 
-The acceptance test copies the separate sample host to a temporary repository, validates and produces four scenes with real local Spanish WAV narration, executes the `double(n)` solution against three tests, starts and requests the preview, and completes a GitHub Pages production build. Unit tests cover parsing, validation, isolation timeout, audio caching, paid-provider authorization, installation, update planning, and publication gating through the acceptance path.
+The acceptance test copies the separate sample host to a temporary repository, validates and produces four scenes with real local Spanish WAV narration, executes the `multiplicar(a, b)` solution against three tests, starts and requests the preview, and completes a GitHub Pages production build. Unit tests cover parsing, validation, isolation timeout, audio caching, paid-provider authorization, installation, update planning, and publication gating through the acceptance path.
 
 ## MVP limitations
 

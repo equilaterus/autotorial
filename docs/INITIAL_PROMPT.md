@@ -261,11 +261,11 @@ The first lesson must explain:
 Use a simple example:
 
 ```javascript
-function double(n) {
-  return n * 2;
+function multiplicar(a, b) {
+  return a * b;
 }
 
-console.log(double(3));
+console.log(multiplicar(3, 2));
 ```
 
 The generated lesson must include:
@@ -274,7 +274,7 @@ The generated lesson must include:
 - Spanish narration generated locally.
 - Animated code explanations.
 - One multiple-choice comprehension question.
-- One executable JavaScript exercise where the student implements or fixes `double(n)`.
+- One executable JavaScript exercise where the student implements or fixes `multiplicar(a, b)`.
 - Automated tests with clear feedback.
 - A working local interactive preview.
 - A successful GitHub Pages production build.

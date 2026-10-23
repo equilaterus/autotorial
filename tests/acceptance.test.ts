@@ -29,7 +29,7 @@ describe.skipIf(!hasEspeak)('Hello World host acceptance', () => {
     await cp(path.join(framework, 'fixtures', 'hello-world-host', 'lessons'), path.join(host, 'lessons'), {recursive: true});
     expect(run(['validate', 'session-1', '--host', host])).toContain('is valid');
     expect(run(['produce', 'session-1', '--host', host, '--voice', 'espeak'])).toContain('4 scenes, 2 exercises');
-    expect(run(['exercise', 'session-1', 'fix-double', '--host', host])).toContain('"passed": true');
+    expect(run(['exercise', 'session-1', 'fix-multiplicar', '--host', host])).toContain('"passed": true');
     expect(run(['publish', '--host', host])).toContain('publication gate passed');
     const course = JSON.parse(await readFile(path.join(host, 'bin', 'aitutorial', 'site', 'course.json'), 'utf8'));
     expect(course.sessions).toHaveLength(1);

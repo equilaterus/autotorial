@@ -35,7 +35,7 @@ const hasCommand = (command: string) => (spawnSync(command, ['--help'], {stdio: 
 function chosenProvider(requested: VoiceProviderName): Exclude<VoiceProviderName, 'auto'> {
   if (requested !== 'auto') return requested;
   if (hasCommand('kokoro')) return 'kokoro';
-  if (hasCommand('piper') && process.env.PIPER_MODEL) return 'piper';
+  if ((process.env.PIPER_BIN || hasCommand('piper')) && process.env.PIPER_MODEL) return 'piper';
   if (hasCommand('espeak-ng') || hasCommand('espeak')) return 'espeak';
   throw new Error('No local TTS provider found. Install Kokoro (recommended), Piper, or espeak-ng.');
 }
@@ -91,7 +91,7 @@ async function generateLocal(provider: string, request: SegmentRequest, voice: s
   if (provider === 'piper') {
     const piperModel = model || process.env.PIPER_MODEL;
     if (!piperModel) throw new Error('Piper requires --model or PIPER_MODEL pointing to a Spanish voice model');
-    await run('piper', ['--model', piperModel, '--output_file', request.output], request.text);
+    await run(process.env.PIPER_BIN || 'piper', ['--model', piperModel, '--output_file', request.output], request.text);
     return;
   }
   const kokoroModel = model || process.env.KOKORO_MODEL || '';
@@ -116,7 +116,7 @@ async function generateElevenLabs(request: SegmentRequest, voice: string, model:
 export async function generateNarration(scenes: LessonScene[], publicDir: string, options: VoiceOptions): Promise<VoiceResult> {
   const provider = chosenProvider(options.provider);
   const voice = options.voice || (provider === 'elevenlabs' ? 'EXAVITQu4vr4xnSDxMaL' : provider === 'kokoro' ? 'ef_dora' : 'es');
-  const model = options.model || (provider === 'elevenlabs' ? 'eleven_multilingual_v2' : 'default');
+  const model = options.model || (provider === 'elevenlabs' ? 'eleven_multilingual_v2' : provider === 'piper' ? process.env.PIPER_MODEL || '' : provider === 'kokoro' ? process.env.KOKORO_MODEL || 'default' : 'default');
   const audioDir = path.join(publicDir, 'audio');
   await mkdir(audioDir, {recursive: true});
   const extension = provider === 'elevenlabs' ? 'mp3' : 'wav';
