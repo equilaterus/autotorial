@@ -1,0 +1,53 @@
+import {spawn, spawnSync} from 'node:child_process';
+import {appendFile, cp, mkdtemp, readFile, stat} from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {afterAll, describe, expect, it} from 'vitest';
+
+const framework = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const cli = path.join(framework, 'dist', 'cli.js');
+const hasEspeak = spawnSync('espeak-ng', ['--version'], {stdio: 'ignore'}).status === 0 || spawnSync('espeak', ['--version'], {stdio: 'ignore'}).status === 0;
+let preview: ReturnType<typeof spawn> | undefined;
+afterAll(() => preview?.kill('SIGTERM'));
+
+function run(args: string[]) {
+  const result = spawnSync(process.execPath, [cli, ...args], {encoding: 'utf8', timeout: 30_000, stdio: 'pipe'});
+  if (result.error || result.status !== 0) throw new Error(`${result.error ?? ''}\n${result.stdout}\n${result.stderr}`);
+  return result.stdout;
+}
+
+function runFailure(args: string[]) {
+  const result = spawnSync(process.execPath, [cli, ...args], {encoding: 'utf8', timeout: 30_000, stdio: 'pipe'});
+  expect(result.status).not.toBe(0);
+  return `${result.stdout}${result.stderr}`;
+}
+
+describe.skipIf(!hasEspeak)('Hello World host acceptance', () => {
+  it('produces narration, verifies exercises, serves preview, and builds static Pages output', async () => {
+    const host = await mkdtemp(path.join(os.tmpdir(), 'aitutorial-acceptance-'));
+    await cp(path.join(framework, 'fixtures', 'hello-world-host', 'lessons'), path.join(host, 'lessons'), {recursive: true});
+    expect(run(['validate', 'session-1', '--host', host])).toContain('is valid');
+    expect(run(['produce', 'session-1', '--host', host, '--voice', 'espeak'])).toContain('4 scenes, 2 exercises');
+    expect(run(['exercise', 'session-1', 'fix-double', '--host', host])).toContain('"passed": true');
+    expect(run(['publish', '--host', host])).toContain('publication gate passed');
+    const course = JSON.parse(await readFile(path.join(host, 'bin', 'aitutorial', 'site', 'course.json'), 'utf8'));
+    expect(course.sessions).toHaveLength(1);
+    expect((await stat(path.join(host, 'bin', 'aitutorial', 'site', 'index.html'))).size).toBeGreaterThan(100);
+    const lesson = JSON.parse(await readFile(path.join(host, 'bin', 'aitutorial', 'generated', 'session-1.json'), 'utf8'));
+    expect(lesson.audio).toHaveLength(4);
+    expect(await readFile(path.join(host, 'bin', 'aitutorial', 'public', lesson.audio[0].src), {encoding: 'ascii', flag: 'r'}).then((text) => text.slice(0, 4))).toBe('RIFF');
+
+    const port = 43129;
+    preview = spawn(process.execPath, [cli, 'preview', '--host', host, '--port', String(port)], {stdio: 'ignore'});
+    let response: Response | undefined;
+    for (let attempt = 0; attempt < 40; attempt++) {
+      try { response = await fetch(`http://127.0.0.1:${port}/`); if (response.ok) break; } catch { /* server still starting */ }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    expect(response?.ok).toBe(true);
+    expect(await response!.text()).toContain('<div id="root"></div>');
+    await appendFile(path.join(host, 'lessons', 'session-1', 'INDEX.md'), '\n<!-- stale edit -->\n');
+    expect(runFailure(['publish', '--host', host])).toContain('changed since production');
+  });
+});

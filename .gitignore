@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+bin/
+**/bin/
+*.mp4
+*.png
+*.jpg
+*.jpeg
+*.webp
+.DS_Store

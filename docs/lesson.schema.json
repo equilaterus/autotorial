@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aitutorial.local/lesson.schema.json",
+  "title": "aitutorial structured lesson block",
+  "type": "object",
+  "required": ["scenes", "exercises"],
+  "properties": {
+    "scenes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/scene"}},
+    "exercises": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/exercise"}
+    }
+  },
+  "$defs": {
+    "sceneBase": {
+      "type": "object",
+      "required": ["id", "type", "title", "narration"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "narration": {"type": "string", "minLength": 1},
+        "duration": {"type": "number", "minimum": 1}
+      }
+    },
+    "scene": {
+      "allOf": [
+        {"$ref": "#/$defs/sceneBase"},
+        {"oneOf": [
+          {"properties": {"type": {"const": "concept"}, "body": {"type": "string"}, "bullets": {"type": "array", "items": {"type": "string"}}}, "required": ["body"]},
+          {"properties": {"type": {"const": "code"}, "code": {"type": "string"}, "language": {"type": "string"}, "reveal": {"type": "array", "items": {"type": "number"}}, "highlights": {"type": "array", "items": {"type": "integer", "minimum": 1}}}, "required": ["code"]},
+          {"properties": {"type": {"const": "diagram"}, "nodes": {"type": "array", "items": {"type": "object", "required": ["id", "label"]}}, "edges": {"type": "array", "items": {"type": "array", "prefixItems": [{"type": "string"}, {"type": "string"}], "minItems": 2, "maxItems": 2}}}, "required": ["nodes", "edges"]},
+          {"properties": {"type": {"const": "terminal"}, "command": {"type": "string"}, "output": {"type": "string"}}, "required": ["command", "output"]}
+        ]}
+      ]
+    },
+    "exerciseBase": {
+      "type": "object",
+      "required": ["id", "type", "prompt", "explanation", "afterScene"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "prompt": {"type": "string", "minLength": 1},
+        "explanation": {"type": "string", "minLength": 1},
+        "afterScene": {"type": "string", "minLength": 1}
+      }
+    },
+    "exercise": {
+      "allOf": [
+        {"$ref": "#/$defs/exerciseBase"},
+        {"oneOf": [
+          {"properties": {"type": {"enum": ["multiple-choice", "output-prediction"]}, "choices": {"type": "array", "minItems": 2, "items": {"type": "string"}}, "answer": {"type": "integer", "minimum": 0}}, "required": ["choices", "answer"]},
+          {"properties": {"type": {"const": "code-completion"}, "starter": {"type": "string"}, "solution": {"type": "string"}, "tests": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["name", "expression", "expected"], "properties": {"name": {"type": "string"}, "expression": {"type": "string"}, "expected": {}}}}}, "required": ["starter", "tests"]}
+        ]}
+      ]
+    }
+  }
+}
