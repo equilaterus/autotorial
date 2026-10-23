@@ -1,6 +1,6 @@
-# aitutorial
+# Autotorial
 
-`aitutorial` is a small, reusable harness for animated, narrated, interactive programming lessons. A host repository owns human-readable Markdown lessons; this submodule supplies validation, local TTS, a React/Remotion player, deterministic exercises, static GitHub Pages builds, and optional MP4 export.
+**Autotorial** is a small, reusable harness for animated, narrated, interactive programming lessons. A host repository owns human-readable Markdown lessons; this submodule supplies validation, local TTS, a React/Remotion player, deterministic exercises, static GitHub Pages builds, and optional MP4 export. The technical CLI and content-format identifier remain `aitutorial` for compatibility.
 
 Generated audio, sites, and videos always go under ignored `bin/aitutorial/`. No `.mp4` or image asset is part of this repository.
 
