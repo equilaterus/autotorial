@@ -8,7 +8,7 @@ check_only=false
 if [[ "${1:-}" == "--check-only" ]]; then
   check_only=true
 elif [[ $# -ne 0 ]]; then
-  echo "Usage: scripts/deploy-pages.sh [--check-only]" >&2
+  echo "Usage: run/deploy-pages.sh [--check-only]" >&2
   exit 2
 fi
 

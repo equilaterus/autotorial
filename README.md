@@ -22,17 +22,18 @@ Update to an already known tag/ref with `./lib/aitutorial/update.sh <revision>`.
 
 ## Author and produce
 
-Only `lessons/<session>/INDEX.md` is required. See [the lesson format](docs/LESSON_FORMAT.md) and the complete [JavaScript functions sample](fixtures/hello-world-host/lessons/session-1/INDEX.md).
+Only `lessons/<session>/INDEX.md` is required. See [the lesson format](docs/LESSON_FORMAT.md) and the complete samples for [JavaScript: Hola mundo](samples/hello-world-host/lessons/session-0/INDEX.md) and [JavaScript functions](samples/hello-world-host/lessons/session-1/INDEX.md).
 
 ```bash
-.aitutorial/aitutorial validate session-1
+.aitutorial/aitutorial validate session-0
+.aitutorial/aitutorial produce session-0
 .aitutorial/aitutorial produce session-1
 .aitutorial/aitutorial preview --port 4173
 ```
 
 `produce` validates content, verifies author solutions in a terminated worker, synthesizes each narration segment, measures its actual duration, and writes hash-cached assets. The browser runs learner JavaScript in a sandboxed opaque-origin iframe containing a disposable worker. Its CSP blocks network connections; its timeout destroys the frame and worker. Tests provide deterministic feedback rather than AI grading.
 
-The React player uses the same Remotion composition as video export. It has play/pause/progress controls, scene navigation, Spanish narration/subtitles, contextual practice, a persistent final assessment that is revealed automatically when playback ends, and per-exercise completion in local storage.
+The React player uses the same Remotion composition as video export. It has play/pause/progress controls, previous/next session navigation whenever a course has multiple sessions, scene navigation, Spanish narration/subtitles, contextual practice, a persistent final assessment that is revealed automatically when playback ends, and per-exercise completion in local storage. Sessions appear in slug order, so `session-0` precedes `session-1`.
 
 ## Voices
 
@@ -73,7 +74,7 @@ npm ci
 npm run check
 ```
 
-The acceptance test copies the separate sample host to a temporary repository, validates and produces four scenes with real local Spanish WAV narration, executes the `multiplicar(a, b)` solution against three tests, starts and requests the preview, and completes a GitHub Pages production build. Unit tests cover parsing, validation, isolation timeout, audio caching, paid-provider authorization, installation, update planning, and publication gating through the acceptance path.
+The acceptance test copies the separate sample host to a temporary repository, validates and produces both sessions with real local Spanish WAV narration, checks their exercises and course order, starts and requests the preview, and completes a GitHub Pages production build. Unit tests cover parsing, validation, isolation timeout, audio caching, paid-provider authorization, installation, update planning, and publication gating through the acceptance path.
 
 ## MVP limitations
 

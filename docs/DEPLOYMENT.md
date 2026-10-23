@@ -3,13 +3,13 @@
 The final repository stores its already-generated deployable website directly
 under the ignored root `bin/` directory. Deployment does not run the AutoTorial
 CLI, synthesize speech, render video, rebuild the lesson, or copy from
-`fixtures/`.
+`samples/`.
 
 To inspect the exact snapshot that will be published without contacting the
 remote repository:
 
 ```bash
-./scripts/deploy-pages.sh --check-only
+./run/deploy-pages.sh --check-only
 ```
 
 This checks the existing `bin/` snapshot, including at least one `.mp4` under
@@ -19,7 +19,7 @@ asset paths. Missing files stop the deployment instead of regenerating them.
 To publish that local snapshot:
 
 ```bash
-./scripts/deploy-pages.sh
+./run/deploy-pages.sh
 ```
 
 The script publishes the contents of `bin/` as the branch root and force-pushes
@@ -37,7 +37,7 @@ choose `/ (root)`. The site will then be available at:
 https://equilaterus.github.io/autotorial/
 ```
 
-The current lesson video will be available at:
+Session videos are available under `video/`, for example:
 
 ```text
 https://equilaterus.github.io/autotorial/video/session-1.mp4
