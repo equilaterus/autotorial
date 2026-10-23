@@ -56,11 +56,11 @@ ElevenLabs is optional. Keep the key only in `ELEVENLABS_API_KEY`. The first com
 .aitutorial/aitutorial render session-1 --format mp4
 ```
 
-Publication refuses missing, invalid, stale, or incomplete audio output, then creates a backend-free site at `bin/aitutorial/site/` with relative asset paths suitable for project Pages. It does not deploy, commit, push, or invoke remote Git operations. The deployment script publishes the existing local fixture output without producing the lesson again.
+Publication refuses missing, invalid, stale, or incomplete audio output, then creates a backend-free site at `bin/aitutorial/site/` with relative asset paths suitable for project Pages. It does not deploy, commit, push, or invoke remote Git operations. In the final repository, the deployment script publishes the complete existing root `bin/` snapshot without producing the lesson again.
 
 MP4 rendering is secondary and may download/use a compatible Chromium through Remotion on first use. It writes `bin/aitutorial/video/<session>.mp4`; narration and visuals come from the same produced lesson.
 
-The already-generated local fixture can be published without regenerating it. See [GitHub Pages deployment](docs/DEPLOYMENT.md).
+The already-generated root `bin/` snapshot can be published without regenerating it. See [GitHub Pages deployment](docs/DEPLOYMENT.md).
 
 ## Agent skills
 
