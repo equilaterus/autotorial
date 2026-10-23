@@ -53,7 +53,13 @@ export default function App() {
     localStorage.setItem(`aitutorial:${lesson.slug}:${id}`, 'complete');
     setCompleted((previous) => new Set(previous).add(id));
   };
-  return <><header><div><span className="brand">Autotorial</span><h1>{lesson.title}</h1></div><select value={lesson.slug} onChange={(event) => {const session = course.sessions.find((item) => item.slug === event.target.value); if (session) fetch(`./${session.href}`).then((item) => item.json()).then(setLesson);}}>{course.sessions.map((session) => <option key={session.slug} value={session.slug}>{session.title}</option>)}</select></header>
+  return <><header className="app-header">
+    <a className="site-logo" href="https://thescienceofcode.com/" target="_blank" rel="noreferrer" aria-label="The Science of Code">
+      <img src="https://thescienceofcode.com/images/the-science-of-code.png" alt="The Science of Code" />
+    </a>
+    <div className="lesson-heading"><span className="brand">Autotorial · Lección interactiva</span><h1>{lesson.title}</h1></div>
+    <label className="lesson-picker"><span>Seleccionar lección</span><select value={lesson.slug} onChange={(event) => {const session = course.sessions.find((item) => item.slug === event.target.value); if (session) fetch(`./${session.href}`).then((item) => item.json()).then(setLesson);}}>{course.sessions.map((session) => <option key={session.slug} value={session.slug}>{session.title}</option>)}</select></label>
+  </header>
     <main><div className="player-shell"><Player ref={player} component={LessonComposition} inputProps={{lesson}} durationInFrames={duration} compositionWidth={1280} compositionHeight={720} fps={FPS} controls style={{width: '100%', aspectRatio: '16 / 9'}}/></div>
       <nav className="scene-nav" aria-label="Scene navigation">{lesson.scenes.map((scene, index) => { const sceneExercises = lesson.exercises.filter((item) => item.afterScene === scene.id); const done = sceneExercises.length > 0 && sceneExercises.every((item) => completed.has(item.id)); return <button key={scene.id} className={index === currentScene ? 'active' : ''} onClick={() => go(index)}><span>{done ? '✓' : index + 1}</span>{scene.title}</button>; })}</nav>
       {exercise && <ExercisePanel key={exercise.id} exercise={exercise} onComplete={() => complete(exercise.id)}/>}<p className="subtitle">{lesson.scenes[currentScene]?.narration}</p>
