@@ -46,6 +46,8 @@ PIPER_MODEL=/path/to/es_ES-model.onnx .aitutorial/aitutorial produce session-1 -
 
 If Piper lives in an isolated environment rather than on `PATH`, set `PIPER_BIN=/path/to/piper` as well. The model path is included in the audio cache key.
 
+The voice verified for the published Spanish samples is Piper 1.8.0 with `es_MX-claude-high`. See the exact working installation, model-download, and production commands in [Voice setup](docs/VOICES.md).
+
 Provider, voice, model, and text are part of every cache key, so one changed segment does not regenerate the rest. Kokoro CLI packaging is not standardized; this MVP expects `kokoro --voice <voice> --output <file> [--model <path>] <text>`. Piper uses its standard stdin interface.
 
 ElevenLabs is optional. Keep the key only in `ELEVENLABS_API_KEY`. The first command intentionally fails after displaying provider/model/voice, new and cached segments, characters/estimated credits, cost availability, and an exact manifest hash. Only an explicit rerun with `--approve-manifest <hash>` authorizes that unchanged batch. CI cannot preapprove future batches.
