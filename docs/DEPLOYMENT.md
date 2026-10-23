@@ -14,7 +14,9 @@ remote repository:
 
 This checks the existing `bin/` snapshot, including at least one `.mp4` under
 `bin/video/`, and verifies that `index.html` has project-Page-safe relative
-asset paths. Missing files stop the deployment instead of regenerating them.
+asset paths. It uses `ffprobe` and `ffmpeg` to reject MP4 files without an audio
+stream or with silent/unreadable audio. Missing or invalid files stop the
+deployment instead of regenerating them.
 
 To publish that local snapshot:
 

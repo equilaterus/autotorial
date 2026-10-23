@@ -63,6 +63,8 @@ Publication refuses missing, invalid, stale, or incomplete audio output, then cr
 
 MP4 rendering is secondary and may download/use a compatible Chromium through Remotion on first use. It writes `bin/aitutorial/video/<session>.mp4`; narration and visuals come from the same produced lesson.
 
+Set `REMOTION_BROWSER_EXECUTABLE=/absolute/path/to/chromium` to reuse an installed Chromium. Rendering enforces an audio track, and the deployment script rejects MP4 files whose audio stream is missing, silent, or unreadable.
+
 The already-generated root `bin/` snapshot can be published without regenerating it. See [GitHub Pages deployment](docs/DEPLOYMENT.md).
 
 ## Agent skills

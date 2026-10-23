@@ -44,12 +44,13 @@ async function renderMp4(hostRoot: string, slug: string): Promise<string> {
   const lessonFile = path.join(outputRoot(hostRoot), 'generated', `${slug}.json`);
   const lesson = JSON.parse(await readFile(lessonFile, 'utf8')) as ProducedLesson;
   await assertPublishable(hostRoot, slug);
+  const browserExecutable = process.env.REMOTION_BROWSER_EXECUTABLE || undefined;
   const serveUrl = await bundle({entryPoint: path.join(frameworkRoot, 'src', 'remotion', 'index.tsx'), publicDir: path.join(outputRoot(hostRoot), 'public')});
   const inputProps = {lesson};
-  const composition = await selectComposition({serveUrl, id: 'Lesson', inputProps});
+  const composition = await selectComposition({serveUrl, id: 'Lesson', inputProps, browserExecutable});
   const output = path.join(outputRoot(hostRoot), 'video', `${slug}.mp4`);
   await mkdir(path.dirname(output), {recursive: true});
-  await renderMedia({composition, serveUrl, codec: 'h264', outputLocation: output, inputProps});
+  await renderMedia({composition, serveUrl, codec: 'h264', outputLocation: output, inputProps, browserExecutable, enforceAudioTrack: true});
   return output;
 }
 

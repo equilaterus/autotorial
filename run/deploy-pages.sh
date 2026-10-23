@@ -23,6 +23,23 @@ if [[ ${#videos[@]} -eq 0 ]]; then
   exit 1
 fi
 
+if ! command -v ffprobe >/dev/null || ! command -v ffmpeg >/dev/null; then
+  echo "ffprobe and ffmpeg are required to verify MP4 audio before deployment" >&2
+  exit 1
+fi
+
+for video in "${videos[@]}"; do
+  if ! ffprobe -v error -select_streams a:0 -show_entries stream=codec_type -of csv=p=0 "$video" | grep -qx audio; then
+    echo "MP4 has no audio stream: $video" >&2
+    exit 1
+  fi
+  volume_report="$(ffmpeg -hide_banner -i "$video" -vn -af volumedetect -f null - 2>&1)"
+  if grep -q 'mean_volume: -inf' <<<"$volume_report" || ! grep -q 'mean_volume:' <<<"$volume_report"; then
+    echo "MP4 audio is silent or unreadable: $video" >&2
+    exit 1
+  fi
+done
+
 touch "$deploy_dir/.nojekyll"
 
 if grep -Eiq "(src|href)=['\"]/[^/]" "$deploy_dir/index.html"; then
