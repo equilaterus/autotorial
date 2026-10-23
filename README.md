@@ -32,7 +32,7 @@ Only `lessons/<session>/INDEX.md` is required. See [the lesson format](docs/LESS
 
 `produce` validates content, verifies author solutions in a terminated worker, synthesizes each narration segment, measures its actual duration, and writes hash-cached assets. The browser runs learner JavaScript in a sandboxed opaque-origin iframe containing a disposable worker. Its CSP blocks network connections; its timeout destroys the frame and worker. Tests provide deterministic feedback rather than AI grading.
 
-The React player uses the same Remotion composition as video export. It has play/pause/progress controls, scene navigation, Spanish narration/subtitles, exercise pauses, and per-exercise completion in local storage.
+The React player uses the same Remotion composition as video export. It has play/pause/progress controls, scene navigation, Spanish narration/subtitles, contextual practice, a persistent final assessment that is revealed automatically when playback ends, and per-exercise completion in local storage.
 
 ## Voices
 

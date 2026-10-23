@@ -18,5 +18,8 @@ select { background:#121725; color:white; padding:10px 14px; border:1px solid #3
 .exercise > button { background:#71e6c1; color:#07110f; border:0; border-radius:10px; padding:12px 18px; font-weight:800; cursor:pointer; }
 .choices { display:grid; gap:10px; }
 .pass { color:#71e6c1; }.fail { color:#ff8f9b; }.test-results { list-style:none; padding:0; line-height:1.8; }
+.final-assessment { scroll-margin-top:24px; margin:48px 0 80px; }
+.final-assessment .exercise { border-color:#71e6c1; box-shadow:0 24px 70px #0006; }
+.assessment-complete { color:#71e6c1; font-weight:800; text-align:center; }
 .subtitle { color:#aab4ce; text-align:center; min-height:52px; font-size:17px; line-height:1.5; }
 @media(max-width:650px){header{align-items:start;gap:20px;flex-direction:column}.exercise{padding:20px}}

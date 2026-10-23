@@ -1,5 +1,5 @@
 import {spawn, spawnSync} from 'node:child_process';
-import {appendFile, cp, mkdtemp, readFile, stat} from 'node:fs/promises';
+import {appendFile, cp, mkdtemp, readFile, readdir, stat} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -34,6 +34,10 @@ describe.skipIf(!hasEspeak)('Hello World host acceptance', () => {
     const course = JSON.parse(await readFile(path.join(host, 'bin', 'aitutorial', 'site', 'course.json'), 'utf8'));
     expect(course.sessions).toHaveLength(1);
     expect((await stat(path.join(host, 'bin', 'aitutorial', 'site', 'index.html'))).size).toBeGreaterThan(100);
+    const assetsDir = path.join(host, 'bin', 'aitutorial', 'site', 'assets');
+    const scripts = (await readdir(assetsDir)).filter((file) => file.endsWith('.js'));
+    const publishedJavaScript = (await Promise.all(scripts.map((file) => readFile(path.join(assetsDir, file), 'utf8')))).join('\n');
+    expect(publishedJavaScript).toContain('Evaluación final');
     const lesson = JSON.parse(await readFile(path.join(host, 'bin', 'aitutorial', 'generated', 'session-1.json'), 'utf8'));
     expect(lesson.audio).toHaveLength(4);
     expect(await readFile(path.join(host, 'bin', 'aitutorial', 'public', lesson.audio[0].src), {encoding: 'ascii', flag: 'r'}).then((text) => text.slice(0, 4))).toBe('RIFF');

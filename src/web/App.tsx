@@ -13,6 +13,7 @@ export default function App() {
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
   const player = useRef<PlayerRef>(null);
+  const finalAssessment = useRef<HTMLDivElement>(null);
   useEffect(() => { fetch('./course.json').then((value) => value.json()).then((value: Course) => {setCourse(value); if (value.sessions[0]) return fetch(`./${value.sessions[0].href}`).then((item) => item.json()).then(setLesson);}).catch((failure) => setError(String(failure))); }, []);
   useEffect(() => {
     if (!lesson) return;
@@ -28,7 +29,19 @@ export default function App() {
     if (!lesson) return;
     setCompleted(new Set(lesson.exercises.filter((item) => localStorage.getItem(`aitutorial:${lesson.slug}:${item.id}`) === 'complete').map((item) => item.id)));
   }, [lesson]);
-  const exercise = useMemo(() => lesson?.exercises.find((item) => item.afterScene === lesson.scenes[currentScene]?.id), [lesson, currentScene]);
+  const finalExercise = useMemo(() => {
+    if (!lesson) return undefined;
+    const lastScene = lesson.scenes.at(-1);
+    return lesson.exercises.find((item) => item.afterScene === lastScene?.id) ?? lesson.exercises.at(-1);
+  }, [lesson]);
+  const exercise = useMemo(() => lesson?.exercises.find((item) => item.id !== finalExercise?.id && item.afterScene === lesson.scenes[currentScene]?.id), [lesson, currentScene, finalExercise]);
+  useEffect(() => {
+    const current = player.current;
+    if (!current || !finalExercise) return;
+    const showAssessment = () => finalAssessment.current?.scrollIntoView({behavior: 'smooth', block: 'start'});
+    current.addEventListener('ended', showAssessment);
+    return () => current.removeEventListener('ended', showAssessment);
+  }, [lesson, finalExercise]);
   if (error) return <main><h1>No se pudo cargar el curso</h1><pre>{error}</pre></main>;
   if (!course || !lesson) return <main><p>Cargando la lección…</p></main>;
   const duration = lesson.scenes.reduce((total, scene) => total + sceneFrames(scene), 0);
@@ -36,9 +49,14 @@ export default function App() {
     const frame = lesson.scenes.slice(0, index).reduce((total, scene) => total + sceneFrames(scene), 0);
     player.current?.seekTo(frame); setCurrentScene(index);
   };
+  const complete = (id: string) => {
+    localStorage.setItem(`aitutorial:${lesson.slug}:${id}`, 'complete');
+    setCompleted((previous) => new Set(previous).add(id));
+  };
   return <><header><div><span className="brand">Autotorial</span><h1>{lesson.title}</h1></div><select value={lesson.slug} onChange={(event) => {const session = course.sessions.find((item) => item.slug === event.target.value); if (session) fetch(`./${session.href}`).then((item) => item.json()).then(setLesson);}}>{course.sessions.map((session) => <option key={session.slug} value={session.slug}>{session.title}</option>)}</select></header>
     <main><div className="player-shell"><Player ref={player} component={LessonComposition} inputProps={{lesson}} durationInFrames={duration} compositionWidth={1280} compositionHeight={720} fps={FPS} controls style={{width: '100%', aspectRatio: '16 / 9'}}/></div>
       <nav className="scene-nav" aria-label="Scene navigation">{lesson.scenes.map((scene, index) => { const sceneExercises = lesson.exercises.filter((item) => item.afterScene === scene.id); const done = sceneExercises.length > 0 && sceneExercises.every((item) => completed.has(item.id)); return <button key={scene.id} className={index === currentScene ? 'active' : ''} onClick={() => go(index)}><span>{done ? '✓' : index + 1}</span>{scene.title}</button>; })}</nav>
-      {exercise && <ExercisePanel key={exercise.id} exercise={exercise} onComplete={() => {localStorage.setItem(`aitutorial:${lesson.slug}:${exercise.id}`, 'complete'); setCompleted((previous) => new Set(previous).add(exercise.id));}}/>}<p className="subtitle">{lesson.scenes[currentScene]?.narration}</p>
+      {exercise && <ExercisePanel key={exercise.id} exercise={exercise} onComplete={() => complete(exercise.id)}/>}<p className="subtitle">{lesson.scenes[currentScene]?.narration}</p>
+      {finalExercise && <div className="final-assessment" ref={finalAssessment}><ExercisePanel exercise={finalExercise} label="Evaluación final" onComplete={() => complete(finalExercise.id)}/>{completed.has(finalExercise.id) && <p className="assessment-complete">✓ Evaluación completada</p>}</div>}
     </main></>;
 }
