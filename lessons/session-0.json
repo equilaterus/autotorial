@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "slug": "session-0",
+  "title": "JavaScript: Hola mundo",
+  "language": "es",
+  "objectives": [
+    "Crear un primer programa de JavaScript",
+    "Mostrar un mensaje con console.log",
+    "Ejecutar el archivo y comprobar su salida"
+  ],
+  "prerequisites": [
+    "Ninguno"
+  ],
+  "scenes": [
+    {
+      "id": "first-program",
+      "type": "concept",
+      "title": "Tu primer programa",
+      "body": "Un programa es una secuencia de instrucciones. Empezaremos guardando un texto y mostrándolo en la consola.",
+      "bullets": [
+        "JavaScript ejecuta instrucciones en orden",
+        "Los textos se escriben entre comillas",
+        "La consola permite observar el resultado"
+      ],
+      "narration": "Un programa es una secuencia de instrucciones. En nuestro primer ejemplo guardaremos un texto y lo mostraremos en la consola para comprobar el resultado.",
+      "duration": 9.92281179138322
+    },
+    {
+      "id": "hello-code",
+      "type": "code",
+      "title": "Escribir Hola, mundo",
+      "language": "javascript",
+      "code": "const mensaje = \"Hola, mundo!\";\nconsole.log(mensaje);",
+      "reveal": [
+        0,
+        1
+      ],
+      "highlights": [
+        1,
+        2
+      ],
+      "narration": "La primera línea guarda el texto Hola, mundo en la constante mensaje. La segunda línea usa console punto log para mostrar ese valor.",
+      "duration": 9.098503401360544
+    },
+    {
+      "id": "run-program",
+      "type": "terminal",
+      "title": "Ejecutar y comprobar",
+      "command": "node hola.js",
+      "output": "Hola, mundo!",
+      "narration": "Guardamos el código en hola punto jota ese y lo ejecutamos con Node. La terminal responde Hola, mundo, exactamente como esperábamos.",
+      "duration": 10.317551020408162
+    }
+  ],
+  "exercises": [
+    {
+      "id": "predict-output",
+      "type": "output-prediction",
+      "afterScene": "hello-code",
+      "prompt": "¿Qué texto mostrará console.log(mensaje)?",
+      "choices": [
+        "mensaje",
+        "Hola, mundo!",
+        "hola.js"
+      ],
+      "answer": 1,
+      "explanation": "console.log muestra el valor guardado dentro de mensaje, no el nombre de la constante."
+    },
+    {
+      "id": "write-message",
+      "type": "code-completion",
+      "afterScene": "run-program",
+      "prompt": "Cambia mensaje para que el programa muestre exactamente Hola, mundo!",
+      "starter": "const mensaje = \"Adiós\";\nconsole.log(mensaje);",
+      "solution": "const mensaje = \"Hola, mundo!\";\nconsole.log(mensaje);",
+      "tests": [
+        {
+          "name": "guarda el saludo completo",
+          "expression": "mensaje",
+          "expected": "Hola, mundo!"
+        }
+      ],
+      "explanation": "Una cadena de texto conserva letras, espacios, coma y signo de admiración exactamente como aparecen entre comillas."
+    }
+  ],
+  "producedAt": "2026-10-23T19:18:50.752Z",
+  "sourceHash": "74e2943f9dd92c6db66829eec5773c06ce7613ff50833933e21ebb17f7a1c090",
+  "audio": [
+    {
+      "sceneId": "first-program",
+      "src": "audio/dea40fa5fbe6a9553a13108b57132ec9cdf2878826bea8be87c0af216f1adbf4.wav",
+      "duration": 9.32281179138322,
+      "provider": "piper",
+      "cacheKey": "dea40fa5fbe6a9553a13108b57132ec9cdf2878826bea8be87c0af216f1adbf4"
+    },
+    {
+      "sceneId": "hello-code",
+      "src": "audio/9b9b3eaf2d44a7a04c41bed3df36af781056743e8014252035bf70c184330d39.wav",
+      "duration": 8.498503401360544,
+      "provider": "piper",
+      "cacheKey": "9b9b3eaf2d44a7a04c41bed3df36af781056743e8014252035bf70c184330d39"
+    },
+    {
+      "sceneId": "run-program",
+      "src": "audio/a41b791fe8af78668418f9bee0903d70af0c41281fbe9bebe98d172e760151f4.wav",
+      "duration": 9.717551020408163,
+      "provider": "piper",
+      "cacheKey": "a41b791fe8af78668418f9bee0903d70af0c41281fbe9bebe98d172e760151f4"
+    }
+  ],
+  "totalDuration": 29.338866213151924
+}

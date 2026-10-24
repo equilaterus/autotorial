@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "sessions": [
+    {
+      "slug": "session-0",
+      "title": "JavaScript: Hola mundo",
+      "language": "es",
+      "objectives": [
+        "Crear un primer programa de JavaScript",
+        "Mostrar un mensaje con console.log",
+        "Ejecutar el archivo y comprobar su salida"
+      ],
+      "href": "lessons/session-0.json"
+    },
+    {
+      "slug": "session-1",
+      "title": "Funciones en JavaScript",
+      "language": "es",
+      "objectives": [
+        "Explicar qué es una función",
+        "Usar parámetros y return",
+        "Invocar y modificar una función con pruebas"
+      ],
+      "href": "lessons/session-1.json"
+    }
+  ]
+}

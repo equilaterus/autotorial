@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "slug": "session-1",
+  "title": "Funciones en JavaScript",
+  "language": "es",
+  "objectives": [
+    "Explicar qué es una función",
+    "Usar parámetros y return",
+    "Invocar y modificar una función con pruebas"
+  ],
+  "prerequisites": [
+    "Expresiones y variables básicas de JavaScript"
+  ],
+  "scenes": [
+    {
+      "id": "definition",
+      "type": "concept",
+      "title": "Una función guarda una acción",
+      "body": "Una función es un bloque reutilizable de código. Podemos darle un nombre y ejecutarla cuantas veces necesitemos.",
+      "bullets": [
+        "Evita repetir código",
+        "Expresa una intención",
+        "Puede recibir y devolver valores"
+      ],
+      "narration": "Una función es un bloque reutilizable de código. Le damos un nombre para poder ejecutar la misma acción cada vez que la necesitemos.",
+      "duration": 8.66893424036281
+    },
+    {
+      "id": "parameters",
+      "type": "diagram",
+      "title": "El dato entra, el resultado sale",
+      "nodes": [
+        {
+          "id": "arguments",
+          "label": "a = 3, b = 2"
+        },
+        {
+          "id": "function",
+          "label": "multiplicar(a, b)"
+        },
+        {
+          "id": "return",
+          "label": "6"
+        }
+      ],
+      "edges": [
+        [
+          "arguments",
+          "function"
+        ],
+        [
+          "function",
+          "return"
+        ]
+      ],
+      "narration": "Los parámetros a y b reciben dos datos. Return entrega el resultado al lugar donde se llamó la función. Aquí entran tres y dos, y sale seis.",
+      "duration": 9.551292517006802
+    },
+    {
+      "id": "implementation",
+      "type": "code",
+      "title": "Definir y llamar multiplicar",
+      "language": "javascript",
+      "code": "function multiplicar(a, b) {\n  return a * b;\n}\n\nconsole.log(multiplicar(3, 2));",
+      "reveal": [
+        0,
+        0.5,
+        1,
+        1.5,
+        2
+      ],
+      "highlights": [
+        1,
+        2,
+        5
+      ],
+      "narration": "Definimos multiplicar con los parámetros a y b. Multiplicamos ambos valores y retornamos el resultado. Para usarla escribimos multiplicar y pasamos tres y dos entre paréntesis.",
+      "duration": 12.093877551020407
+    },
+    {
+      "id": "verification",
+      "type": "terminal",
+      "title": "Comprobar el comportamiento",
+      "command": "node multiplicar.js",
+      "output": "6",
+      "narration": "Al ejecutar el programa, la consola muestra seis. Ahora modifica la función y usa las pruebas para comprobar varios casos, no solamente este ejemplo.",
+      "duration": 11.87328798185941
+    }
+  ],
+  "exercises": [
+    {
+      "id": "return-check",
+      "type": "multiple-choice",
+      "afterScene": "parameters",
+      "prompt": "¿Qué hace return dentro de multiplicar?",
+      "choices": [
+        "Repite la función",
+        "Entrega el resultado",
+        "Cambia el parámetro"
+      ],
+      "answer": 1,
+      "explanation": "return termina la ejecución de la función y entrega su valor al código que la llamó."
+    },
+    {
+      "id": "fix-multiplicar",
+      "type": "code-completion",
+      "afterScene": "verification",
+      "prompt": "Corrige multiplicar(a, b) para que devuelva el producto de ambos números.",
+      "starter": "function multiplicar(a, b) {\n  return a + b; // modifica esta línea\n}",
+      "solution": "function multiplicar(a, b) {\n  return a * b;\n}",
+      "tests": [
+        {
+          "name": "multiplica 3 por 2",
+          "expression": "multiplicar(3, 2)",
+          "expected": 6
+        },
+        {
+          "name": "multiplica por cero",
+          "expression": "multiplicar(7, 0)",
+          "expected": 0
+        },
+        {
+          "name": "multiplica un negativo",
+          "expression": "multiplicar(-4, 3)",
+          "expected": -12
+        }
+      ],
+      "explanation": "El operador de multiplicación combina los dos parámetros y funciona también con cero y números negativos."
+    }
+  ],
+  "producedAt": "2026-10-23T19:00:20.739Z",
+  "sourceHash": "0dbb5ae36aba0ee7a703404ad7b401bed457140aadba0050edfba120eaf8b96c",
+  "audio": [
+    {
+      "sceneId": "definition",
+      "src": "audio/77e161b5da19ab19060e237fed1c59b85c600be06392d11714c8ada10a7a3019.wav",
+      "duration": 8.068934240362811,
+      "provider": "piper",
+      "cacheKey": "77e161b5da19ab19060e237fed1c59b85c600be06392d11714c8ada10a7a3019"
+    },
+    {
+      "sceneId": "parameters",
+      "src": "audio/c1df71229d3dcc4ccec6d7a59cf9a0e77ec118377a91ac368963b7b443638f91.wav",
+      "duration": 8.951292517006802,
+      "provider": "piper",
+      "cacheKey": "c1df71229d3dcc4ccec6d7a59cf9a0e77ec118377a91ac368963b7b443638f91"
+    },
+    {
+      "sceneId": "implementation",
+      "src": "audio/6ef03921e32c1fdbaf2688754dbf905ad7ae226440cdeb0012293aefa8dbbe1f.wav",
+      "duration": 11.493877551020407,
+      "provider": "piper",
+      "cacheKey": "6ef03921e32c1fdbaf2688754dbf905ad7ae226440cdeb0012293aefa8dbbe1f"
+    },
+    {
+      "sceneId": "verification",
+      "src": "audio/ed74a49bd446182caea079d8cf0ddf5d98d13b81f4b087bb2fff381fad23c93d.wav",
+      "duration": 11.27328798185941,
+      "provider": "piper",
+      "cacheKey": "ed74a49bd446182caea079d8cf0ddf5d98d13b81f4b087bb2fff381fad23c93d"
+    }
+  ],
+  "totalDuration": 42.187392290249434
+}
