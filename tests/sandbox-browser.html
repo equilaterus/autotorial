@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es">
+  <head><link rel="icon" href="data:," /></head>
+  <body data-status="running">
+    <script type="module">
+      import {runInSandbox} from '/src/web/components/Sandbox.ts';
+
+      const tests = [{
+        name: 'guarda el saludo completo',
+        expression: 'mensaje',
+        expected: 'Hola, mundo!',
+      }];
+
+      try {
+        const incorrect = await runInSandbox('const mensaje = "Hola mundo";\nconsole.log(mensaje);', tests);
+        const correct = await runInSandbox('const mensaje = "Hola, mundo!";\nconsole.log(mensaje);', tests);
+        document.body.dataset.incorrect = String(incorrect.passed);
+        document.body.dataset.correct = String(correct.passed);
+        document.body.dataset.status = 'complete';
+      } catch (error) {
+        document.body.dataset.status = 'error';
+        document.body.textContent = String(error);
+      }
+    </script>
+  </body>
+</html>
