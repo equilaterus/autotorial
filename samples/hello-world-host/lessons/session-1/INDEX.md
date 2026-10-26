@@ -13,7 +13,7 @@ prerequisites:
 
 Una sesión corta para aprender a encapsular comportamiento y comprobarlo de forma determinista.
 
-```aitutorial
+```autotorial
 {
   "scenes": [
     {

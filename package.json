@@ -1,16 +1,16 @@
 {
-  "name": "aitutorial",
+  "name": "autotorial",
   "version": "0.1.0",
   "private": true,
   "description": "Interactive, narrated programming lesson harness",
   "type": "module",
   "bin": {
-    "aitutorial": "dist/cli.js"
+    "autotorial": "dist/cli.js"
   },
   "scripts": {
     "build": "esbuild src/cli.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/cli.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --exclude tests/acceptance.test.ts",
     "test:acceptance": "npm run build && vitest run tests/acceptance.test.ts",
     "check": "npm run typecheck && npm test && npm run test:acceptance"
   },

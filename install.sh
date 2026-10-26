@@ -16,7 +16,7 @@ while (($#)); do
 done
 
 if ! command -v git >/dev/null || ! command -v node >/dev/null || ! command -v npm >/dev/null; then
-  echo "aitutorial requires Git, Node.js 20+, and npm. Install them and run this script again." >&2
+  echo "autotorial requires Git, Node.js 20+, and npm. Install them and run this script again." >&2
   exit 1
 fi
 
@@ -33,16 +33,38 @@ HOST_ROOT="$(cd "$HOST_ROOT" && pwd)"
 do_mkdir() { if [[ $DRY_RUN == 1 ]]; then echo "mkdir -p $1"; else mkdir -p "$1"; fi; }
 relative_target() { node -e 'const p=require("node:path"); console.log(p.relative(process.argv[1],process.argv[2]))' "$1" "$2"; }
 ensure_link() {
-  local target="$1" destination="$2" parent relative current
+  local target="$1" destination="$2" parent relative legacy_relative current
   parent="$(dirname "$destination")"; relative="$(relative_target "$parent" "$target")"
+  legacy_relative="${relative//autotorial/aitutorial}"
   do_mkdir "$parent"
   if [[ -L "$destination" ]]; then
     current="$(readlink "$destination")"
     if [[ "$current" == "$relative" ]]; then echo "ok: $destination"; return; fi
+    if [[ "$current" == "$legacy_relative" ]]; then
+      if [[ $DRY_RUN == 1 ]]; then
+        echo "replace legacy symlink $destination -> $relative"
+      else
+        rm "$destination"
+        ln -s "$relative" "$destination"
+      fi
+      return
+    fi
     echo "Refusing to replace unrelated symlink: $destination -> $current" >&2; exit 1
   fi
   if [[ -e "$destination" ]]; then echo "Refusing to overwrite existing path: $destination" >&2; exit 1; fi
   if [[ $DRY_RUN == 1 ]]; then echo "ln -s $relative $destination"; else ln -s "$relative" "$destination"; fi
+}
+migrate_legacy_cli() {
+  local destination="$HOST_ROOT/.aitutorial/aitutorial" expected="../lib/aitutorial/dist/cli.js" current
+  [[ -L "$destination" ]] || return
+  current="$(readlink "$destination")"
+  [[ "$current" == "$expected" ]] || { echo "Refusing to remove unrelated legacy symlink: $destination -> $current" >&2; exit 1; }
+  if [[ $DRY_RUN == 1 ]]; then
+    echo "remove legacy symlink $destination"
+  else
+    rm "$destination"
+    rmdir "$HOST_ROOT/.aitutorial" 2>/dev/null || true
+  fi
 }
 ensure_line() {
   local line="$1" file="$2"
@@ -60,11 +82,12 @@ for skill in create-content produce-session voice publish-session; do
   ensure_link "$SCRIPT_DIR/skills/$skill" "$HOST_ROOT/.agents/skills/$skill"
   ensure_link "$SCRIPT_DIR/skills/$skill" "$HOST_ROOT/.claude/skills/$skill"
 done
-ensure_link "$SCRIPT_DIR/dist/cli.js" "$HOST_ROOT/.aitutorial/aitutorial"
-ensure_file "$SCRIPT_DIR/templates/aitutorial-pages.yml" "$HOST_ROOT/.github/workflows/aitutorial-pages.yml"
+migrate_legacy_cli
+ensure_link "$SCRIPT_DIR/dist/cli.js" "$HOST_ROOT/.autotorial/autotorial"
+ensure_file "$SCRIPT_DIR/templates/autotorial-pages.yml" "$HOST_ROOT/.github/workflows/autotorial-pages.yml"
 ensure_line "/bin/" "$HOST_ROOT/.gitignore"
 
 if [[ ! -d "$SCRIPT_DIR/node_modules" || ! -f "$SCRIPT_DIR/dist/cli.js" ]]; then
   echo "Setup required in $SCRIPT_DIR: npm ci && npm run build"
 fi
-echo "aitutorial installed for $HOST_ROOT"
+echo "autotorial installed for $HOST_ROOT"

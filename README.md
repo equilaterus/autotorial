@@ -1,8 +1,8 @@
 # Autotorial
 
-**Autotorial** is a small, reusable harness for animated, narrated, interactive programming lessons. A host repository owns human-readable Markdown lessons; this submodule supplies validation, local TTS, a React/Remotion player, deterministic exercises, static GitHub Pages builds, and optional MP4 export. The technical CLI and content-format identifier remain `aitutorial` for compatibility.
+**Autotorial** is a small, reusable harness for animated, narrated, interactive programming lessons. A host repository owns human-readable Markdown lessons; this submodule supplies validation, local TTS, a React/Remotion player, deterministic exercises, static GitHub Pages builds, and optional MP4 export. Its CLI and content-format identifier are both `autotorial`.
 
-Generated audio, sites, and videos always go under ignored `bin/aitutorial/`. No `.mp4` or image asset is part of this repository.
+Generated audio, sites, and videos always go under ignored `bin/autotorial/`. No `.mp4` or image asset is part of this repository.
 
 ## Install in a course repository
 
@@ -16,7 +16,7 @@ npm run build --prefix lib/autotorial
 ./lib/autotorial/install.sh
 ```
 
-The installer detects the superproject, creates relative project-only skill links under `.agents/skills/` and `.claude/skills/`, links `.aitutorial/aitutorial`, adds `/bin/` to the host `.gitignore`, and installs a Pages workflow only when that path is free. It never replaces unrelated files. Running it again is safe. The default workflow expects the conventional `lib/autotorial` submodule path.
+The installer detects the superproject, creates relative project-only skill links under `.agents/skills/` and `.claude/skills/`, links `.autotorial/autotorial`, adds `/bin/` to the host `.gitignore`, and installs a Pages workflow only when that path is free. It never replaces unrelated files. Running it again is safe. The default workflow expects the conventional `lib/autotorial` submodule path.
 
 Update to an already known tag/ref with `./lib/autotorial/update.sh <revision>`. The updater refuses dirty submodule/pointer state, fetches tags, checks out the exact commit, and reconciles links; it never commits or pushes. Inspect with `--dry-run` first.
 
@@ -25,10 +25,10 @@ Update to an already known tag/ref with `./lib/autotorial/update.sh <revision>`.
 Only `lessons/<session>/INDEX.md` is required. See [the lesson format](docs/LESSON_FORMAT.md) and the complete samples for [JavaScript: Hola mundo](samples/hello-world-host/lessons/session-0/INDEX.md) and [JavaScript functions](samples/hello-world-host/lessons/session-1/INDEX.md).
 
 ```bash
-.aitutorial/aitutorial validate session-0
-.aitutorial/aitutorial produce session-0
-.aitutorial/aitutorial produce session-1
-.aitutorial/aitutorial preview --port 4173
+.autotorial/autotorial validate session-0
+.autotorial/autotorial produce session-0
+.autotorial/autotorial produce session-1
+.autotorial/autotorial preview --port 4173
 ```
 
 `produce` validates content, verifies author solutions in a terminated worker, synthesizes each narration segment, measures its actual duration, and writes hash-cached assets. The browser runs learner JavaScript in a sandboxed opaque-origin iframe containing a disposable worker. Its CSP blocks network connections; its timeout destroys the frame and worker. Tests provide deterministic feedback rather than AI grading.
@@ -40,8 +40,8 @@ The React player uses the same Remotion composition as video export. It has play
 Automatic selection is Kokoro → Piper → espeak. Configure provider details explicitly when needed:
 
 ```bash
-.aitutorial/aitutorial produce session-1 --voice kokoro --speaker ef_dora
-PIPER_MODEL=/path/to/es_ES-model.onnx .aitutorial/aitutorial produce session-1 --voice piper
+.autotorial/autotorial produce session-1 --voice kokoro --speaker ef_dora
+PIPER_MODEL=/path/to/es_ES-model.onnx .autotorial/autotorial produce session-1 --voice piper
 ```
 
 If Piper lives in an isolated environment rather than on `PATH`, set `PIPER_BIN=/path/to/piper` as well. The model path is included in the audio cache key.
@@ -55,13 +55,13 @@ ElevenLabs is optional. Keep the key only in `ELEVENLABS_API_KEY`. The first com
 ## Publish and video
 
 ```bash
-.aitutorial/aitutorial publish
-.aitutorial/aitutorial render session-1 --format mp4
+.autotorial/autotorial publish
+.autotorial/autotorial render session-1 --format mp4
 ```
 
-Publication refuses missing, invalid, stale, or incomplete audio output, then creates a backend-free site at `bin/aitutorial/site/` with relative asset paths suitable for project Pages. It does not deploy, commit, push, or invoke remote Git operations. In the final repository, the deployment script publishes the complete existing root `bin/` snapshot without producing the lesson again.
+Publication refuses missing, invalid, stale, or incomplete audio output, then creates a backend-free site at `bin/autotorial/site/` with relative asset paths suitable for project Pages. It does not deploy, commit, push, or invoke remote Git operations. In the final repository, the deployment script publishes the complete existing root `bin/` snapshot without producing the lesson again.
 
-MP4 rendering is secondary and may download/use a compatible Chromium through Remotion on first use. It writes `bin/aitutorial/video/<session>.mp4`; narration and visuals come from the same produced lesson.
+MP4 rendering is secondary and may download/use a compatible Chromium through Remotion on first use. It writes `bin/autotorial/video/<session>.mp4`; narration and visuals come from the same produced lesson.
 
 Set `REMOTION_BROWSER_EXECUTABLE=/absolute/path/to/chromium` to reuse an installed Chromium. Rendering enforces an audio track, and the deployment script rejects MP4 files whose audio stream is missing, silent, or unreadable.
 

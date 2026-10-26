@@ -13,7 +13,7 @@ prerequisites:
 
 Una introducción breve para escribir, ejecutar y comprobar el primer programa antes de continuar con funciones.
 
-```aitutorial
+```autotorial
 {
   "scenes": [
     {

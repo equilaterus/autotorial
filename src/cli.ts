@@ -25,7 +25,7 @@ function parseArgs(argv: string[]) {
   return {positional, options};
 }
 
-const usage = `aitutorial <command> [session] [options]
+const usage = `autotorial <command> [session] [options]
 
 Commands:
   validate <session>             Parse and validate a lesson
@@ -113,4 +113,4 @@ async function main() {
   throw new Error(`Unknown command: ${command}\n\n${usage}`);
 }
 
-main().catch((error) => { console.error(`aitutorial: ${(error as Error).message}`); process.exitCode = 1; });
+main().catch((error) => { console.error(`autotorial: ${(error as Error).message}`); process.exitCode = 1; });

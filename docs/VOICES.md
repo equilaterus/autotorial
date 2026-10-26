@@ -31,7 +31,7 @@ es_MX-claude-high.onnx.json
 ```bash
 PIPER_BIN=/tmp/autotorial-piper/bin/piper \
 PIPER_MODEL=/tmp/autotorial-piper/voices/es_MX-claude-high.onnx \
-  .aitutorial/aitutorial produce session-0 --voice piper
+  .autotorial/autotorial produce session-0 --voice piper
 ```
 
 Para producir otra sesión, cambia únicamente el slug final. La ruta del modelo

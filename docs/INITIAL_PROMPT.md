@@ -1,8 +1,8 @@
 Implement the MVP directly. Make reasonable technical decisions autonomously. Prioritize working code and end-to-end validation over elaborate planning. Keep the architecture minimal.
 
-# Build aitutorial — Interactive AI Tutorial Harness
+# Build autotorial — Interactive AI Tutorial Harness
 
-Build `aitutorial`, a reusable, lightweight harness for producing animated, narrated, interactive programming lessons using Codex or Claude Code.
+Build `autotorial`, a reusable, lightweight harness for producing animated, narrated, interactive programming lessons using Codex or Claude Code.
 
 The educational experience should resemble a polished animated programming tutorial, with narration, code visualization, diagrams, and interactive exercises.
 
@@ -27,7 +27,7 @@ Keep the content format independent of any specific programming language.
 
 ## 2. Git submodule integration
 
-`aitutorial` will be installed inside other Git repositories:
+`autotorial` will be installed inside other Git repositories:
 
 ```text
 course-repo/
@@ -55,7 +55,7 @@ Implement two scripts:
 
 ### update.sh
 
-- Safely update the `aitutorial` Git submodule.
+- Safely update the `autotorial` Git submodule.
 - Support selecting a revision or tag.
 - Refuse unsafe operations involving uncommitted changes.
 - Reconcile installed skill symlinks.
@@ -224,11 +224,11 @@ Changing one segment should not regenerate all narration.
 Provide a CLI callable directly from the submodule:
 
 ```bash
-aitutorial validate session-1
-aitutorial produce session-1
-aitutorial preview session-1
-aitutorial publish session-1
-aitutorial render session-1 --format mp4
+autotorial validate session-1
+autotorial produce session-1
+autotorial preview session-1
+autotorial publish session-1
+autotorial render session-1 --format mp4
 ```
 
 The CLI must operate on the host repository's `lessons/` directory.
@@ -297,11 +297,11 @@ Provide a README explaining installation, authoring, skills, voice configuration
 
 Document the system's limitations.
 
-Ensure the sample works from a host repository layout, not only from inside `aitutorial`.
+Ensure the sample works from a host repository layout, not only from inside `autotorial`.
 
 **Acceptance criteria:**
 
-A user can add `aitutorial` as a submodule, run `install.sh`, define `lessons/session-1/INDEX.md`, invoke `produce-session`, preview an animated narrated lesson with working exercises, and invoke `publish-session` to prepare publication on the host repository's GitHub Pages.
+A user can add `autotorial` as a submodule, run `install.sh`, define `lessons/session-1/INDEX.md`, invoke `produce-session`, preview an animated narrated lesson with working exercises, and invoke `publish-session` to prepare publication on the host repository's GitHub Pages.
 
 No paid services are required for the complete default workflow.
 

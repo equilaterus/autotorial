@@ -6,7 +6,7 @@ import {parseLesson, validateLesson} from '../src/core/parser';
 
 describe('lesson parsing and validation', () => {
   it('parses frontmatter and the embedded structured block', async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), 'aitutorial-parser-'));
+    const root = await mkdtemp(path.join(os.tmpdir(), 'autotorial-parser-'));
     await mkdir(path.join(root, 'lessons', 'one'), {recursive: true});
     await writeFile(path.join(root, 'lessons', 'one', 'INDEX.md'), `---
 title: Tiny lesson
@@ -14,7 +14,7 @@ language: en
 objectives: [Learn one thing]
 prerequisites: []
 ---
-\n\`\`\`aitutorial
+\n\`\`\`autotorial
 {"scenes":[{"id":"intro","type":"concept","title":"Intro","body":"Body","narration":"Hello"}],"exercises":[]}
 \`\`\`
 `);
@@ -25,14 +25,14 @@ prerequisites: []
   });
 
   it('reports invalid references and malformed choice answers', async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), 'aitutorial-invalid-'));
+    const root = await mkdtemp(path.join(os.tmpdir(), 'autotorial-invalid-'));
     await mkdir(path.join(root, 'lessons', 'bad'), {recursive: true});
     await writeFile(path.join(root, 'lessons', 'bad', 'INDEX.md'), `---
 title: Bad
 language: en
 objectives: [Find errors]
 ---
-\n\`\`\`aitutorial
+\n\`\`\`autotorial
 {"scenes":[{"id":"intro","type":"concept","title":"Intro","body":"Body","narration":"Hello"}],"exercises":[{"id":"q","type":"multiple-choice","prompt":"Question","explanation":"Why","afterScene":"missing","choices":["one"],"answer":4}]}
 \`\`\`
 `);

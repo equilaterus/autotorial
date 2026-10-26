@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aitutorial.local/lesson.schema.json",
-  "title": "aitutorial structured lesson block",
+  "$id": "https://autotorial.local/lesson.schema.json",
+  "title": "autotorial structured lesson block",
   "type": "object",
   "required": ["scenes", "exercises"],
   "properties": {

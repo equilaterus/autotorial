@@ -35,7 +35,7 @@ export default function App() {
   }, [lesson]);
   useEffect(() => {
     if (!lesson) return;
-    setCompleted(new Set(lesson.exercises.filter((item) => localStorage.getItem(`aitutorial:${lesson.slug}:${item.id}`) === 'complete').map((item) => item.id)));
+    setCompleted(new Set(lesson.exercises.filter((item) => localStorage.getItem(`autotorial:${lesson.slug}:${item.id}`) === 'complete').map((item) => item.id)));
   }, [lesson]);
   const finalExercise = useMemo(() => {
     if (!lesson) return undefined;
@@ -63,7 +63,7 @@ export default function App() {
     player.current?.seekTo(frame); setCurrentScene(index);
   };
   const complete = (id: string) => {
-    localStorage.setItem(`aitutorial:${lesson.slug}:${id}`, 'complete');
+    localStorage.setItem(`autotorial:${lesson.slug}:${id}`, 'complete');
     setCompleted((previous) => new Set(previous).add(id));
   };
   return <><header className="app-header">

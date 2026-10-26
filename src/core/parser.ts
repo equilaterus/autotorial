@@ -4,7 +4,7 @@ import path from 'node:path';
 import YAML from 'yaml';
 import type {LessonDefinition, ValidationIssue} from './types';
 
-const DATA_BLOCK = /```aitutorial\s*\n([\s\S]*?)\n```/m;
+const DATA_BLOCK = /```autotorial\s*\n([\s\S]*?)\n```/m;
 
 function parseFrontmatter(source: string): {attributes: Record<string, unknown>; body: string} {
   if (!source.startsWith('---\n')) return {attributes: {}, body: source};
@@ -21,12 +21,12 @@ export async function parseLesson(hostRoot: string, slug: string): Promise<{less
   const source = await readFile(file, 'utf8');
   const {attributes, body} = parseFrontmatter(source);
   const match = body.match(DATA_BLOCK);
-  if (!match) throw new Error(`${file}: missing \`\`\`aitutorial JSON block`);
+  if (!match) throw new Error(`${file}: missing \`\`\`autotorial JSON block`);
   let structured: Record<string, unknown>;
   try {
     structured = JSON.parse(match[1]) as Record<string, unknown>;
   } catch (error) {
-    throw new Error(`${file}: invalid aitutorial JSON: ${(error as Error).message}`);
+    throw new Error(`${file}: invalid autotorial JSON: ${(error as Error).message}`);
   }
   return {
     source,

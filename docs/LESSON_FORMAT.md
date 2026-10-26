@@ -1,6 +1,6 @@
 # Lesson format
 
-Every lesson lives at `lessons/<slug>/INDEX.md`. YAML frontmatter holds the searchable metadata; one fenced `aitutorial` JSON block holds deterministic scene and exercise data. Everything else is ordinary author-facing Markdown.
+Every lesson lives at `lessons/<slug>/INDEX.md`. YAML frontmatter holds the searchable metadata; one fenced `autotorial` JSON block holds deterministic scene and exercise data. Everything else is ordinary author-facing Markdown.
 
 ````markdown
 ---
@@ -14,7 +14,7 @@ prerequisites:
 
 # Notes for the educator
 
-```aitutorial
+```autotorial
 {"scenes":[...],"exercises":[...]}
 ```
 ````

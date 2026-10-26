@@ -15,10 +15,10 @@ while (($#)); do
   esac
 done
 [[ -n "$HOST_ROOT" ]] || HOST_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-superproject-working-tree 2>/dev/null || true)"
-if [[ -z "$HOST_ROOT" ]]; then echo "aitutorial is not running as a registered submodule; pass --host only for diagnostics." >&2; exit 1; fi
+if [[ -z "$HOST_ROOT" ]]; then echo "autotorial is not running as a registered submodule; pass --host only for diagnostics." >&2; exit 1; fi
 HOST_ROOT="$(cd "$HOST_ROOT" && pwd)"
 if [[ -n "$(git -C "$SCRIPT_DIR" status --porcelain --untracked-files=normal)" ]]; then
-  echo "Refusing to update: the aitutorial submodule has uncommitted changes." >&2; exit 1
+  echo "Refusing to update: the autotorial submodule has uncommitted changes." >&2; exit 1
 fi
 SUBMODULE_PATH="$(node -e 'const p=require("node:path"); console.log(p.relative(process.argv[1],process.argv[2]))' "$HOST_ROOT" "$SCRIPT_DIR")"
 git -C "$HOST_ROOT" diff --quiet -- "$SUBMODULE_PATH" || { echo "Refusing to update: the host has unstaged submodule changes." >&2; exit 1; }
@@ -34,4 +34,4 @@ TARGET="$(git -C "$SCRIPT_DIR" rev-parse --verify "${REVISION}^{commit}")"
 git -C "$SCRIPT_DIR" checkout --detach "$TARGET"
 git -C "$SCRIPT_DIR" submodule update --init --recursive
 "$SCRIPT_DIR/install.sh" --host "$HOST_ROOT"
-echo "Updated aitutorial to $TARGET. Review and commit the submodule pointer in the host repository."
+echo "Updated autotorial to $TARGET. Review and commit the submodule pointer in the host repository."

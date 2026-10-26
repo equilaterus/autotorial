@@ -26,7 +26,7 @@ addEventListener('message', (event) => {
   worker.onerror = (error) => parent.postMessage({token, result:{passed:false, output:[], tests:[], error:error.message || 'Sandbox worker failed'}}, '*');
   worker.postMessage({token, code, tests});
 }, {once:true});
-parent.postMessage({type:'aitutorial-sandbox-ready'}, '*');
+parent.postMessage({type:'autotorial-sandbox-ready'}, '*');
 </script>`;
 
 export function runInSandbox(code: string, tests: CodeTest[], timeoutMs = 1500): Promise<ExecutionResult> {
@@ -39,7 +39,7 @@ export function runInSandbox(code: string, tests: CodeTest[], timeoutMs = 1500):
     const cleanup = () => { window.removeEventListener('message', receive); frame.remove(); clearTimeout(timer); };
     const receive = (event: MessageEvent) => {
       if (event.source !== frame.contentWindow) return;
-      if (event.data?.type === 'aitutorial-sandbox-ready') {
+      if (event.data?.type === 'autotorial-sandbox-ready') {
         frame.contentWindow?.postMessage({token, code, tests}, '*');
         return;
       }

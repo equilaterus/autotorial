@@ -1,6 +1,6 @@
 ---
 name: create-content
-description: Write or improve a human-readable aitutorial lesson definition and its deterministic exercises.
+description: Write or improve a human-readable autotorial lesson definition and its deterministic exercises.
 ---
 
 # Create lesson content
@@ -10,7 +10,7 @@ Read the existing `lessons/<session>/INDEX.md` and any referenced examples befor
 Define scene order, Spanish or configured lesson-language narration, visual intent, and exercises. Keep answers and deterministic tests in the lesson. Never invent passing results: after edits delegate validation to the shared CLI:
 
 ```bash
-.aitutorial/aitutorial validate <session>
+.autotorial/autotorial validate <session>
 ```
 
 Do not produce, publish, deploy, commit, or push unless separately requested.

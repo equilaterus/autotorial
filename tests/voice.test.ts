@@ -11,7 +11,7 @@ const hasEspeak = spawnSync('espeak-ng', ['--version'], {stdio: 'ignore'}).statu
 
 describe('voice generation', () => {
   it.skipIf(!hasEspeak)('caches local narration by text and configuration hash', async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), 'aitutorial-voice-'));
+    const root = await mkdtemp(path.join(os.tmpdir(), 'autotorial-voice-'));
     const first = await generateNarration(scenes, root, {provider: 'espeak', voice: 'es'});
     const second = await generateNarration(scenes, root, {provider: 'espeak', voice: 'es'});
     expect(first.generated).toBe(1);
@@ -20,7 +20,7 @@ describe('voice generation', () => {
   });
 
   it('requires an exact per-batch manifest before paid generation', async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), 'aitutorial-eleven-'));
+    const root = await mkdtemp(path.join(os.tmpdir(), 'autotorial-eleven-'));
     await expect(generateNarration(scenes, root, {provider: 'elevenlabs', voice: 'voice', model: 'model'})).rejects.toThrow(/explicit approval[\s\S]*--approve-manifest [a-f0-9]{64}/);
   });
 });

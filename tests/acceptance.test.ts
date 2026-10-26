@@ -25,7 +25,7 @@ function runFailure(args: string[]) {
 
 describe.skipIf(!hasEspeak)('Hello World host acceptance', () => {
   it('produces narration, verifies exercises, serves preview, and builds static Pages output', async () => {
-    const host = await mkdtemp(path.join(os.tmpdir(), 'aitutorial-acceptance-'));
+    const host = await mkdtemp(path.join(os.tmpdir(), 'autotorial-acceptance-'));
     await cp(path.join(framework, 'samples', 'hello-world-host', 'lessons'), path.join(host, 'lessons'), {recursive: true});
     expect(run(['validate', 'session-0', '--host', host])).toContain('is valid');
     expect(run(['validate', 'session-1', '--host', host])).toContain('is valid');
@@ -34,21 +34,21 @@ describe.skipIf(!hasEspeak)('Hello World host acceptance', () => {
     expect(run(['exercise', 'session-0', 'write-message', '--host', host])).toContain('"passed": true');
     expect(run(['exercise', 'session-1', 'fix-multiplicar', '--host', host])).toContain('"passed": true');
     expect(run(['publish', '--host', host])).toContain('publication gate passed');
-    const course = JSON.parse(await readFile(path.join(host, 'bin', 'aitutorial', 'site', 'course.json'), 'utf8'));
+    const course = JSON.parse(await readFile(path.join(host, 'bin', 'autotorial', 'site', 'course.json'), 'utf8'));
     expect(course.sessions.map((session: {slug: string}) => session.slug)).toEqual(['session-0', 'session-1']);
-    expect((await stat(path.join(host, 'bin', 'aitutorial', 'site', 'index.html'))).size).toBeGreaterThan(100);
-    const assetsDir = path.join(host, 'bin', 'aitutorial', 'site', 'assets');
+    expect((await stat(path.join(host, 'bin', 'autotorial', 'site', 'index.html'))).size).toBeGreaterThan(100);
+    const assetsDir = path.join(host, 'bin', 'autotorial', 'site', 'assets');
     const scripts = (await readdir(assetsDir)).filter((file) => file.endsWith('.js'));
     const publishedJavaScript = (await Promise.all(scripts.map((file) => readFile(path.join(assetsDir, file), 'utf8')))).join('\n');
     expect(publishedJavaScript).toContain('Evaluación final');
     expect(publishedJavaScript).toContain('Anterior');
     expect(publishedJavaScript).toContain('Siguiente');
     expect(publishedJavaScript).toContain('remotion_staticBase');
-    const helloLesson = JSON.parse(await readFile(path.join(host, 'bin', 'aitutorial', 'generated', 'session-0.json'), 'utf8'));
-    const functionsLesson = JSON.parse(await readFile(path.join(host, 'bin', 'aitutorial', 'generated', 'session-1.json'), 'utf8'));
+    const helloLesson = JSON.parse(await readFile(path.join(host, 'bin', 'autotorial', 'generated', 'session-0.json'), 'utf8'));
+    const functionsLesson = JSON.parse(await readFile(path.join(host, 'bin', 'autotorial', 'generated', 'session-1.json'), 'utf8'));
     expect(helloLesson.audio).toHaveLength(3);
     expect(functionsLesson.audio).toHaveLength(4);
-    expect(await readFile(path.join(host, 'bin', 'aitutorial', 'public', helloLesson.audio[0].src), {encoding: 'ascii', flag: 'r'}).then((text) => text.slice(0, 4))).toBe('RIFF');
+    expect(await readFile(path.join(host, 'bin', 'autotorial', 'public', helloLesson.audio[0].src), {encoding: 'ascii', flag: 'r'}).then((text) => text.slice(0, 4))).toBe('RIFF');
 
     const port = 43129;
     preview = spawn(process.execPath, [cli, 'preview', '--host', host, '--port', String(port)], {stdio: 'ignore'});

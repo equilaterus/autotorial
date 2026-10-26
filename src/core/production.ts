@@ -5,7 +5,7 @@ import {runExerciseInNode} from './executor';
 import type {ProducedLesson} from './types';
 import {generateNarration, type VoiceOptions} from '../voice';
 
-export const outputRoot = (hostRoot: string) => path.join(hostRoot, 'bin', 'aitutorial');
+export const outputRoot = (hostRoot: string) => path.join(hostRoot, 'bin', 'autotorial');
 
 async function writeCourseIndex(hostRoot: string): Promise<void> {
   const generatedDir = path.join(outputRoot(hostRoot), 'generated');
@@ -75,7 +75,7 @@ export async function assertPublishable(hostRoot: string, slug?: string): Promis
   const generatedDir = path.join(outputRoot(hostRoot), 'generated');
   let files: string[];
   try { files = (await readdir(generatedDir)).filter((file) => file.endsWith('.json')); }
-  catch { throw new Error('Nothing has been produced. Run `aitutorial produce <session>` first.'); }
+  catch { throw new Error('Nothing has been produced. Run `autotorial produce <session>` first.'); }
   if (slug && !files.includes(`${slug}.json`)) throw new Error(`Session ${slug} has not been produced`);
   if (!files.length) throw new Error('No produced sessions found');
   const lessons: ProducedLesson[] = [];
