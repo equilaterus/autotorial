@@ -1,4 +1,4 @@
-name: Publish aitutorial to GitHub Pages
+name: Publish Autotorial to GitHub Pages
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     branches: [main]
     paths:
       - "lessons/**"
-      - "lib/aitutorial/**"
+      - "lib/autotorial/**"
 
 permissions:
   contents: read
@@ -28,18 +28,18 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: lib/aitutorial/package-lock.json
-      - run: npm ci --prefix lib/aitutorial
-      - run: npm run build --prefix lib/aitutorial
+          cache-dependency-path: lib/autotorial/package-lock.json
+      - run: npm ci --prefix lib/autotorial
+      - run: npm run build --prefix lib/autotorial
       - name: Produce every lesson with free local TTS
         run: |
           sudo apt-get update
           sudo apt-get install -y espeak-ng
           for lesson in lessons/*/INDEX.md; do
             slug="$(basename "$(dirname "$lesson")")"
-            node lib/aitutorial/dist/cli.js produce "$slug" --host "$GITHUB_WORKSPACE"
+            node lib/autotorial/dist/cli.js produce "$slug" --host "$GITHUB_WORKSPACE"
           done
-      - run: node lib/aitutorial/dist/cli.js publish --host "$GITHUB_WORKSPACE" --base "./"
+      - run: node lib/autotorial/dist/cli.js publish --host "$GITHUB_WORKSPACE" --base "./"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

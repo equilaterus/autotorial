@@ -31,7 +31,7 @@ Keep the content format independent of any specific programming language.
 
 ```text
 course-repo/
-├── lib/aitutorial/       # Git submodule
+├── lib/autotorial/       # Git submodule
 ├── lessons/
 │   └── session-1/
 │       ├── INDEX.md
@@ -45,7 +45,7 @@ Implement two scripts:
 ### install.sh
 
 - Detect the host repository root.
-- Install project-scoped Codex and Claude skills using relative symlinks pointing to `lib/aitutorial/skills/`.
+- Install project-scoped Codex and Claude skills using relative symlinks pointing to `lib/autotorial/skills/`.
 - Support repeated executions without side effects.
 - Never overwrite unrelated files.
 - Detect missing dependencies and provide setup instructions.

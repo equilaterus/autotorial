@@ -17,12 +17,15 @@ describe('host integration scripts', () => {
     const link = await readlink(path.join(host, '.agents', 'skills', 'create-content'));
     expect(path.isAbsolute(link)).toBe(false);
     expect(await readFile(path.join(host, '.gitignore'), 'utf8')).toBe('# host rules\n/bin/\n');
-    expect(await readFile(path.join(host, '.github', 'workflows', 'aitutorial-pages.yml'), 'utf8')).toContain('upload-pages-artifact');
+    const workflow = await readFile(path.join(host, '.github', 'workflows', 'aitutorial-pages.yml'), 'utf8');
+    expect(workflow).toContain('upload-pages-artifact');
+    expect(workflow).toContain('lib/autotorial/dist/cli.js');
+    expect(workflow).not.toContain('lib/aitutorial/');
   });
 
   it('plans a revision-selecting update without changing repositories', async () => {
     const host = await mkdtemp(path.join(os.tmpdir(), 'aitutorial-update-host-'));
-    const frameworkCopy = path.join(host, 'lib', 'aitutorial');
+    const frameworkCopy = path.join(host, 'lib', 'autotorial');
     await mkdir(frameworkCopy, {recursive: true});
     await copyFile(path.join(framework, 'update.sh'), path.join(frameworkCopy, 'update.sh'));
     await writeFile(path.join(frameworkCopy, 'install.sh'), '#!/usr/bin/env bash\nexit 0\n');

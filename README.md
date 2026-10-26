@@ -9,16 +9,16 @@ Generated audio, sites, and videos always go under ignored `bin/aitutorial/`. No
 Requirements: Git, an even-numbered supported Node.js release (20, 22, or 24+), npm, and one local TTS engine. Kokoro is preferred, Piper is the fallback, and `espeak-ng` is supported as the lightweight compatibility fallback used by CI.
 
 ```bash
-git submodule add <aitutorial-url> lib/aitutorial
-npm ci --prefix lib/aitutorial
-npm run build --prefix lib/aitutorial
-./lib/aitutorial/install.sh --dry-run
-./lib/aitutorial/install.sh
+git submodule add <autotorial-url> lib/autotorial
+npm ci --prefix lib/autotorial
+npm run build --prefix lib/autotorial
+./lib/autotorial/install.sh --dry-run
+./lib/autotorial/install.sh
 ```
 
-The installer detects the superproject, creates relative project-only skill links under `.agents/skills/` and `.claude/skills/`, links `.aitutorial/aitutorial`, adds `/bin/` to the host `.gitignore`, and installs a Pages workflow only when that path is free. It never replaces unrelated files. Running it again is safe. The default workflow expects the conventional `lib/aitutorial` submodule path.
+The installer detects the superproject, creates relative project-only skill links under `.agents/skills/` and `.claude/skills/`, links `.aitutorial/aitutorial`, adds `/bin/` to the host `.gitignore`, and installs a Pages workflow only when that path is free. It never replaces unrelated files. Running it again is safe. The default workflow expects the conventional `lib/autotorial` submodule path.
 
-Update to an already known tag/ref with `./lib/aitutorial/update.sh <revision>`. The updater refuses dirty submodule/pointer state, fetches tags, checks out the exact commit, and reconciles links; it never commits or pushes. Inspect with `--dry-run` first.
+Update to an already known tag/ref with `./lib/autotorial/update.sh <revision>`. The updater refuses dirty submodule/pointer state, fetches tags, checks out the exact commit, and reconciles links; it never commits or pushes. Inspect with `--dry-run` first.
 
 ## Author and produce
 
