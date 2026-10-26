@@ -33,14 +33,15 @@ HOST_ROOT="$(cd "$HOST_ROOT" && pwd)"
 do_mkdir() { if [[ $DRY_RUN == 1 ]]; then echo "mkdir -p $1"; else mkdir -p "$1"; fi; }
 relative_target() { node -e 'const p=require("node:path"); console.log(p.relative(process.argv[1],process.argv[2]))' "$1" "$2"; }
 ensure_link() {
-  local target="$1" destination="$2" parent relative legacy_relative current
+  local target="$1" destination="$2" parent relative legacy_relative legacy_skill current
   parent="$(dirname "$destination")"; relative="$(relative_target "$parent" "$target")"
   legacy_relative="${relative//autotorial/aitutorial}"
+  legacy_skill="../../lib/aitutorial/skills/$(basename "$destination")"
   do_mkdir "$parent"
   if [[ -L "$destination" ]]; then
     current="$(readlink "$destination")"
     if [[ "$current" == "$relative" ]]; then echo "ok: $destination"; return; fi
-    if [[ "$current" == "$legacy_relative" ]]; then
+    if [[ "$current" == "$legacy_relative" || "$current" == "$legacy_skill" ]]; then
       if [[ $DRY_RUN == 1 ]]; then
         echo "replace legacy symlink $destination -> $relative"
       else
@@ -56,7 +57,7 @@ ensure_link() {
 }
 migrate_legacy_cli() {
   local destination="$HOST_ROOT/.aitutorial/aitutorial" expected="../lib/aitutorial/dist/cli.js" current
-  [[ -L "$destination" ]] || return
+  [[ -L "$destination" ]] || return 0
   current="$(readlink "$destination")"
   [[ "$current" == "$expected" ]] || { echo "Refusing to remove unrelated legacy symlink: $destination -> $current" >&2; exit 1; }
   if [[ $DRY_RUN == 1 ]]; then

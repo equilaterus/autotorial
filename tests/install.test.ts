@@ -39,7 +39,9 @@ describe('host integration scripts', () => {
 
     execFileSync(path.join(framework, 'install.sh'), ['--host', host]);
 
-    expect(await readlink(path.join(host, '.agents', 'skills', 'create-content'))).toContain('lib/autotorial/skills/create-content');
+    const migratedSkill = await readlink(path.join(host, '.agents', 'skills', 'create-content'));
+    expect(migratedSkill).toContain('autotorial/skills/create-content');
+    expect(migratedSkill).not.toContain('aitutorial');
     expect(await readlink(path.join(host, '.autotorial', 'autotorial'))).toContain('dist/cli.js');
     await expect(readlink(path.join(host, '.aitutorial', 'aitutorial'))).rejects.toThrow();
   });
