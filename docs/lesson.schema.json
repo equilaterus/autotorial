@@ -50,6 +50,7 @@
         {"oneOf": [
           {"properties": {"type": {"enum": ["multiple-choice", "output-prediction"]}, "choices": {"type": "array", "minItems": 2, "items": {"type": "string"}}, "answer": {"type": "integer", "minimum": 0}}, "required": ["choices", "answer"]},
           {"properties": {"type": {"const": "code-completion"}, "starter": {"type": "string"}, "solution": {"type": "string"}, "tests": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["name", "expression", "expected"], "properties": {"name": {"type": "string"}, "expression": {"type": "string"}, "expected": {}}}}}, "required": ["starter", "tests"]}
+          ,{"properties": {"type": {"const": "checkpoint"}}}
           ,{"properties": {"type": {"const": "prompt-copy"}, "copyText": {"type": "string", "minLength": 1}, "buttonLabel": {"type": "string"}}, "required": ["copyText"]}
           ,{"properties": {"type": {"const": "authorization"}, "notice": {"type": "string", "minLength": 1}, "consentLabel": {"type": "string", "minLength": 1}, "copyText": {"type": "string", "minLength": 1}, "buttonLabel": {"type": "string"}}, "required": ["notice", "consentLabel", "copyText"]}
         ]}

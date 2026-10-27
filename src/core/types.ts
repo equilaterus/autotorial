@@ -63,7 +63,7 @@ export type LessonScene = ConceptScene | CodeScene | DiagramScene | TerminalScen
 
 interface ExerciseBase {
   id: string;
-  type: 'multiple-choice' | 'output-prediction' | 'code-completion' | 'prompt-copy' | 'authorization';
+  type: 'multiple-choice' | 'output-prediction' | 'code-completion' | 'prompt-copy' | 'authorization' | 'checkpoint';
   prompt: string;
   explanation: string;
   afterScene: string;
@@ -102,7 +102,11 @@ export interface AuthorizationExercise extends ExerciseBase {
   buttonLabel?: string;
 }
 
-export type Exercise = ChoiceExercise | CodeExercise | PromptCopyExercise | AuthorizationExercise;
+export interface CheckpointExercise extends ExerciseBase {
+  type: 'checkpoint';
+}
+
+export type Exercise = ChoiceExercise | CodeExercise | PromptCopyExercise | AuthorizationExercise | CheckpointExercise;
 
 export interface LessonDefinition {
   schemaVersion: 1;

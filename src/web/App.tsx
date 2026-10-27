@@ -1,11 +1,14 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Player, type PlayerRef} from '@remotion/player';
-import type {ProducedLesson} from '../core/types';
+import type {Exercise, ProducedLesson} from '../core/types';
 import {ExercisePanel} from './components/ExercisePanel';
 import {FPS, LessonComposition, sceneFrames} from './components/LessonComposition';
+import {SiteFooter} from './components/SiteFooter';
 
 interface CourseSession {slug: string; title: string; href: string}
 interface Course {sessions: CourseSession[]}
+
+const isGate = (item: Exercise) => item.type !== 'authorization' && item.type !== 'prompt-copy';
 
 export default function App() {
   const [course, setCourse] = useState<Course>();
@@ -14,14 +17,20 @@ export default function App() {
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
   const [autoPlay, setAutoPlay] = useState(false);
+  const [reached, setReached] = useState(0);
+  const [resetCount, setResetCount] = useState(0);
+  const [confirmReset, setConfirmReset] = useState(false);
   const stepTop = useRef<HTMLDivElement>(null);
   const player = useRef<PlayerRef>(null);
   const questionsRef = useRef<HTMLDivElement>(null);
   const loadSession = (session: CourseSession) => {
     setError('');
     return fetch(`./${session.href}`).then((item) => item.json()).then((value: ProducedLesson) => {
+      const saved = Number(localStorage.getItem(`autotorial:${value.slug}:reached`)) || 0;
+      const resume = Math.min(Math.max(0, saved), value.scenes.length - 1);
       setLesson(value);
-      setCurrentScene(0);
+      setReached(resume);
+      setCurrentScene(resume);
     }).catch((failure) => setError(String(failure)));
   };
   useEffect(() => { fetch('./course.json').then((value) => value.json()).then((value: Course) => {setCourse(value); if (value.sessions[0]) return loadSession(value.sessions[0]);}).catch((failure) => setError(String(failure))); }, []);
@@ -41,8 +50,9 @@ export default function App() {
   const scene = lesson.scenes[currentScene];
   const stepLesson = {...lesson, scenes: [scene], audio: lesson.audio.filter((segment) => segment.sceneId === scene.id)};
   const stepExercises = lesson.exercises.filter((item) => item.afterScene === scene.id);
-  const questions = stepExercises.filter((item) => item.type === 'multiple-choice' || item.type === 'output-prediction' || item.type === 'code-completion');
-  const canContinue = questions.every((item) => completed.has(item.id));
+  const gates = stepExercises.filter(isGate);
+  const canContinue = gates.every((item) => completed.has(item.id));
+  const pendingCheck = stepExercises.some((item) => item.type === 'checkpoint' && !completed.has(item.id));
   const isLast = currentScene === lesson.scenes.length - 1;
   const sessionIndex = course.sessions.findIndex((session) => session.slug === lesson.slug);
   const goToSession = (index: number) => {
@@ -54,11 +64,24 @@ export default function App() {
     setCurrentScene(index);
     stepTop.current?.scrollIntoView({behavior: 'smooth', block: 'start'});
   };
+  const advance = () => {
+    const next = currentScene + 1;
+    if (next > reached) { setReached(next); localStorage.setItem(`autotorial:${lesson.slug}:reached`, String(next)); }
+    go(next, true);
+  };
   const complete = (id: string) => {
     localStorage.setItem(`autotorial:${lesson.slug}:${id}`, 'complete');
     setCompleted((previous) => new Set(previous).add(id));
   };
-  const stepDone = (id: string) => { const own = lesson.exercises.filter((item) => item.afterScene === id && item.type !== 'authorization' && item.type !== 'prompt-copy'); return own.length > 0 && own.every((item) => completed.has(item.id)); };
+  const stepDone = (id: string, index: number) => { const own = lesson.exercises.filter((item) => item.afterScene === id && isGate(item)); return own.length > 0 ? own.every((item) => completed.has(item.id)) : index < reached; };
+  const resetProgress = () => {
+    Object.keys(localStorage).filter((key) => key.startsWith(`autotorial:${lesson.slug}:`)).forEach((key) => localStorage.removeItem(key));
+    setCompleted(new Set());
+    setReached(0);
+    setResetCount((count) => count + 1);
+    setConfirmReset(false);
+    go(0);
+  };
   return <><header className="site-bar"><div className="site-bar-inner">
     <a className="site-logo" href="https://thescienceofcode.com/" aria-label="The Science of Code">
       <img src="https://thescienceofcode.com/images/the-science-of-code.png" alt="The Science of Code" />
@@ -80,14 +103,23 @@ export default function App() {
   </div>
     <main>
       <div ref={stepTop} className="step-head"><span className="eyebrow">Parte {currentScene + 1} de {lesson.scenes.length}</span></div>
-      <nav className="scene-nav" aria-label="Partes de la lección">{lesson.scenes.map((item, index) => <button key={item.id} className={index === currentScene ? 'active' : ''} aria-current={index === currentScene ? 'true' : undefined} title={item.title} aria-label={`Parte ${index + 1}: ${item.title}`} onClick={() => go(index)}>{stepDone(item.id) ? '✓' : index + 1}</button>)}</nav>
+      <nav className="scene-nav" aria-label="Partes de la lección">{lesson.scenes.map((item, index) => <button key={item.id} className={`${index === currentScene ? 'active' : ''} ${stepDone(item.id, index) ? 'done' : ''}`} aria-current={index === currentScene ? 'true' : undefined} title={item.title} aria-label={`Parte ${index + 1}: ${item.title}`} onClick={() => go(index)}>{stepDone(item.id, index) ? '✓' : index + 1}</button>)}</nav>
       <div className="player-shell"><Player ref={player} key={`${lesson.slug}:${scene.id}`} component={LessonComposition} inputProps={{lesson: stepLesson}} durationInFrames={sceneFrames(scene)} compositionWidth={1280} compositionHeight={720} fps={FPS} controls autoPlay={autoPlay} style={{width: '100%', aspectRatio: '16 / 9'}}/></div>
       <p className="subtitle">{scene.narration}</p>
-      <div ref={questionsRef} className="step-questions">{stepExercises.map((exercise) => <ExercisePanel key={exercise.id} exercise={exercise} label={exercise.type === 'authorization' ? 'Autorización' : exercise.type === 'prompt-copy' ? 'Elige y prueba' : 'Comprueba lo aprendido'} onComplete={() => complete(exercise.id)}/>)}</div>
+      <div ref={questionsRef} className="step-questions">{stepExercises.map((exercise) => <ExercisePanel key={`${exercise.id}:${resetCount}`} exercise={exercise} done={completed.has(exercise.id)} label={exercise.type === 'authorization' ? 'Autorización' : exercise.type === 'prompt-copy' ? 'Elige y prueba' : exercise.type === 'checkpoint' ? 'Tu turno' : 'Comprueba lo aprendido'} onComplete={() => complete(exercise.id)}/>)}</div>
       <div className="step-actions">
         <button className="secondary" disabled={currentScene === 0} onClick={() => go(currentScene - 1)}>← Anterior</button>
-        {isLast ? <span className={canContinue ? 'assessment-complete' : 'step-hint'}>{canContinue ? '✓ Lección completada' : 'Responde la pregunta para terminar'}</span>
-          : <>{!canContinue && <span className="step-hint">Responde la pregunta para continuar</span>}<button className="primary" disabled={!canContinue} onClick={() => go(currentScene + 1, true)}>Continuar →</button></>}
+        {isLast ? <span className={canContinue ? 'assessment-complete' : 'step-hint'}>{canContinue ? '✓ Lección completada' : pendingCheck ? 'Marca la casilla cuando lo hayas hecho' : 'Responde la pregunta para terminar'}</span>
+          : <>{!canContinue && <span className="step-hint">{pendingCheck ? 'Marca la casilla cuando lo hayas hecho para continuar' : 'Responde la pregunta para continuar'}</span>}<button className="primary" disabled={!canContinue} onClick={() => advance()}>Continuar →</button></>}
       </div>
-    </main></>;
+      <div className="reset-row"><button type="button" className="reset-button" onClick={() => setConfirmReset(true)}>Reiniciar progreso</button></div>
+    </main>
+    {confirmReset && <div className="modal-backdrop" role="presentation" onClick={() => setConfirmReset(false)} onKeyDown={(event) => {if (event.key === 'Escape') setConfirmReset(false);}}>
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="reset-title" onClick={(event) => event.stopPropagation()}>
+        <h2 id="reset-title">¿Reiniciar el progreso?</h2>
+        <p>Se borrará el progreso guardado en este navegador para esta lección y volverás a la parte 1.</p>
+        <div className="modal-actions"><button type="button" className="secondary" autoFocus onClick={() => setConfirmReset(false)}>Cancelar</button><button type="button" className="danger-button" onClick={resetProgress}>Sí, reiniciar</button></div>
+      </div>
+    </div>}
+    <SiteFooter/></>;
 }

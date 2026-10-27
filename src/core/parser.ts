@@ -127,7 +127,7 @@ export function validateLesson(lesson: LessonDefinition): ValidationIssue[] {
       if (!isText(exercise.notice) || !isText(exercise.consentLabel) || !isText(exercise.copyText)) {
         error(base, 'authorization exercise requires notice, consentLabel, and copyText');
       }
-    } else {
+    } else if (exercise.type !== 'checkpoint') {
       error(`${base}.type`, 'is invalid');
     }
   });
