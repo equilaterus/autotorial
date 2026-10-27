@@ -50,9 +50,15 @@ export default function App() {
   useEffect(() => {
     const current = player.current;
     if (!current) return;
+    let finished = false;
     const showQuestion = () => questionsRef.current?.scrollIntoView({behavior: 'smooth', block: 'start'});
-    current.addEventListener('ended', showQuestion);
-    return () => current.removeEventListener('ended', showQuestion);
+    const onEnded = () => { finished = true; showQuestion(); };
+    const onPlay = () => { finished = false; };
+    const onFullscreen = (event: {detail: {isFullscreen: boolean}}) => { if (!event.detail.isFullscreen && finished) window.setTimeout(showQuestion, 150); };
+    current.addEventListener('ended', onEnded);
+    current.addEventListener('play', onPlay);
+    current.addEventListener('fullscreenchange', onFullscreen);
+    return () => { current.removeEventListener('ended', onEnded); current.removeEventListener('play', onPlay); current.removeEventListener('fullscreenchange', onFullscreen); };
   }, [lesson, currentScene]);
   if (error) return <main><h1>No se pudo cargar el curso</h1><pre>{error}</pre></main>;
   if (!course || !lesson) return <main><p>Cargando la lección…</p></main>;
@@ -91,26 +97,19 @@ export default function App() {
     setConfirmReset(false);
     go(0);
   };
+  const titleLines = lesson.courseTitle ? lesson.courseTitle.split('\n') : [lesson.title];
   return <><header className="site-bar"><div className="site-bar-inner">
     <a className="site-logo" href="https://thescienceofcode.com/" aria-label="The Science of Code">
       <img src="https://thescienceofcode.com/images/the-science-of-code.png" alt="The Science of Code" />
     </a>
-    <nav className="site-nav" aria-label="The Science of Code">
-      <a href="https://thescienceofcode.com/">Home</a>
-      <a href="https://thescienceofcode.com/post/">Posts</a>
-      <a className="extra" href="https://thescienceofcode.com/categories/">Categories</a>
-      <a className="extra" href="https://thescienceofcode.com/tags/">Tags</a>
-    </nav>
-    <span className="site-bar-end" aria-hidden="true"/>
-  </div></header>
-  <div className="lesson-head">
-    <div className="lesson-heading">{lesson.courseTitle ? <h1>{lesson.courseTitle.split('\n').map((line, index) => <span key={line} className={index === 0 ? 'course-kicker' : undefined}>{line}</span>)}</h1> : <h1>{lesson.title}</h1>}</div>
-    <div className="session-controls">
-      <label className="lesson-picker"><span>Seleccionar lección</span><select value={lesson.slug} onChange={(event) => {const session = course.sessions.find((item) => item.slug === event.target.value); if (session) void loadSession(session);}}>{course.sessions.map((session) => <option key={session.slug} value={session.slug}>{session.title}</option>)}</select></label>
-      {course.sessions.length > 1 && <nav className="session-pagination" aria-label="Navegación entre sesiones"><button disabled={sessionIndex <= 0} onClick={() => goToSession(sessionIndex - 1)}>← Anterior</button><span>{sessionIndex + 1} / {course.sessions.length}</span><button disabled={sessionIndex >= course.sessions.length - 1} onClick={() => goToSession(sessionIndex + 1)}>Siguiente →</button></nav>}
+    <h1 className="bar-title">{titleLines.length > 1 && <span className="kicker">{titleLines[0]}</span>}<span>{titleLines[titleLines.length - 1]}</span></h1>
+    <div className="bar-lessons">
+      <select aria-label="Seleccionar lección" value={lesson.slug} onChange={(event) => {const session = course.sessions.find((item) => item.slug === event.target.value); if (session) void loadSession(session);}}>{course.sessions.map((session) => <option key={session.slug} value={session.slug}>{session.title}</option>)}</select>
+      {course.sessions.length > 1 && <nav className="session-pagination" aria-label="Navegación entre sesiones"><button disabled={sessionIndex <= 0} onClick={() => goToSession(sessionIndex - 1)} aria-label="Lección anterior">←</button><span>{sessionIndex + 1} / {course.sessions.length}</span><button disabled={sessionIndex >= course.sessions.length - 1} onClick={() => goToSession(sessionIndex + 1)} aria-label="Lección siguiente">→</button></nav>}
     </div>
-  </div>
+  </div></header>
     <main>
+      <p className="mobile-title">{titleLines.join(' ')}</p>
       <div ref={stepTop} className="step-head"><span className="eyebrow">Parte {currentScene + 1} de {lesson.scenes.length}</span></div>
       <nav className="scene-nav" aria-label="Partes de la lección">{lesson.scenes.map((item, index) => <button key={item.id} className={`${index === currentScene ? 'active' : ''} ${stepDone(item.id, index) ? 'done' : ''}`} aria-current={index === currentScene ? 'true' : undefined} title={item.title} aria-label={`Parte ${index + 1}: ${item.title}`} onClick={() => go(index)}>{stepDone(item.id, index) ? '✓' : index + 1}</button>)}</nav>
       <div className="player-shell"><Player ref={player} key={`${lesson.slug}:${scene.id}`} component={LessonComposition} inputProps={{lesson: stepLesson}} durationInFrames={sceneFrames(scene)} compositionWidth={1280} compositionHeight={720} fps={FPS} controls autoPlay={autoPlay} style={{width: '100%', aspectRatio: '16 / 9'}}/></div>
