@@ -6,6 +6,9 @@ export interface BaseScene {
   title: string;
   narration: string;
   duration?: number;
+  /** Scenes sharing a group form one part (one screen) of the lesson. */
+  group?: string;
+  groupTitle?: string;
 }
 
 export interface ConceptScene extends BaseScene {
@@ -48,7 +51,7 @@ export interface VisualItem {
   image?: string;
 }
 
-export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices';
+export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'prompt-anatomy' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices';
 
 export interface VisualScene extends BaseScene {
   type: 'visual';
@@ -56,6 +59,8 @@ export interface VisualScene extends BaseScene {
   items?: VisualItem[];
   /** Titled images (label, detail, image) for the visuals that show a catalog. */
   cards?: VisualItem[];
+  /** Index of the item to emphasize. */
+  focus?: number;
   steps?: string[];
 }
 

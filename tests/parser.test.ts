@@ -104,4 +104,45 @@ Ignorado.
     expect(lesson.exercises).toMatchObject([{id: 'primera-parte-1', afterScene: 'primera-parte', answer: 0}]);
     expect(validateLesson(lesson)).toEqual([]);
   });
+
+  it('groups #### scenes into one part and attaches part-level exercises to its last scene', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'autotorial-group-'));
+    await mkdir(path.join(root, 'lessons', 'grouped'), {recursive: true});
+    await writeFile(path.join(root, 'lessons', 'grouped', 'INDEX.md'), `---
+title: Grupos
+language: es
+objectives: [Aprender]
+---
+
+## Partes
+
+### 1. Tema
+
+#### Uno
+
+Primera.
+
+\`\`\`exercise
+type: checkpoint
+prompt: Hecho
+explanation: Bien
+\`\`\`
+
+#### Dos
+
+Segunda.
+
+### 2. Aparte
+
+Sola.
+`);
+    const {lesson} = await parseLesson(root, 'grouped');
+    expect(lesson.scenes.map((scene) => [scene.id, scene.group, scene.groupTitle])).toEqual([
+      ['uno', 'tema', 'Tema'],
+      ['dos', 'tema', 'Tema'],
+      ['aparte', undefined, undefined],
+    ]);
+    expect(lesson.exercises).toMatchObject([{id: 'uno-1', afterScene: 'uno'}]);
+    expect(validateLesson(lesson)).toEqual([]);
+  });
 });

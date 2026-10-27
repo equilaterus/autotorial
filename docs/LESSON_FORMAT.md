@@ -26,9 +26,35 @@ explanation: En macOS se arrastra la aplicación a Aplicaciones.
 ```
 ````
 
-Each `###` heading is one scene and, in the player, one screen. The title loses its leading number, plain prose becomes `narration`, the `scene` block holds the remaining scene fields (`type` defaults to `concept`) and every `exercise` block is an exercise of that scene (`afterScene` is implied). Anything after the next `##` heading is free author notes. Nothing is defined twice.
+Each `###` heading is one part: in the player, one screen with its video, its questions and a Continue button. A part without sub-headings is a single scene: the title loses its leading number, plain prose becomes `narration`, the `scene` block holds the remaining scene fields (`type` defaults to `concept`) and every `exercise` block is an exercise of that scene (`afterScene` is implied). Anything after the next `##` heading is free author notes. Nothing is defined twice.
 
-Images live in `lessons/<slug>/assets/` and are copied to the site when the lesson is produced. Reference them by file name: a visual item takes `image`, and `cards` (`{label, detail, image}`) feeds the catalog shown by `app-preview` and `frontend`.
+When several scenes belong to one topic, write them as `####` sub-headings inside one `###` part:
+
+````markdown
+### 8. Qué vamos a construir
+
+#### Frontend: lo que ves
+
+Narration of this scene…
+
+```scene
+type: visual
+visual: frontend
+```
+
+```exercise
+type: multiple-choice
+…
+```
+
+#### Backend: quien recibe las peticiones
+
+Narration of the next scene…
+````
+
+Every `####` is a scene; the player plays them one after another in the same video, shows the narration of the scene that is playing, and gathers all the questions of the part below the video. A question counts for the part, so Continue stays disabled until all of them are answered. Exercises placed directly under the `###` heading (before the first `####`) belong to the part and follow its last scene. Scenes get `group` and `groupTitle` fields in the produced lesson; the sidebar lists parts, not scenes.
+
+Images live in `lessons/<slug>/assets/` and are copied to the site when the lesson is produced. Reference them by file name: a visual item takes `image`, and `cards` (`{label, detail, image}`) feeds the catalog shown by `app-preview` and `frontend`. `focus` (an item index) emphasizes one item in `prompt-anatomy`.
 
 The older layout still works: one fenced `autotorial` JSON block with `scenes` and `exercises`, as below.
 

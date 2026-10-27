@@ -1,9 +1,11 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Player, type PlayerRef} from '@remotion/player';
+import {staticFile} from 'remotion';
 import type {Exercise, ProducedLesson} from '../core/types';
 import {ExercisePanel} from './components/ExercisePanel';
 import {FPS, LessonComposition, sceneFrames} from './components/LessonComposition';
 import {SiteFooter} from './components/SiteFooter';
+import {groupParts} from './parts';
 
 interface CourseSession {slug: string; title: string; href: string}
 interface Course {sessions: CourseSession[]}
@@ -13,11 +15,12 @@ const isGate = (item: Exercise) => item.type !== 'authorization' && item.type !=
 export default function App() {
   const [course, setCourse] = useState<Course>();
   const [lesson, setLesson] = useState<ProducedLesson>();
-  const [currentScene, setCurrentScene] = useState(0);
+  const [currentPart, setCurrentPart] = useState(0);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
   const [autoPlay, setAutoPlay] = useState(false);
   const [reached, setReached] = useState(0);
+  const [subIndex, setSubIndex] = useState(0);
   const [resetCount, setResetCount] = useState(0);
   const [confirmReset, setConfirmReset] = useState(false);
   const stepTop = useRef<HTMLDivElement>(null);
@@ -27,10 +30,10 @@ export default function App() {
     setError('');
     return fetch(`./${session.href}`).then((item) => item.json()).then((value: ProducedLesson) => {
       const saved = Number(localStorage.getItem(`autotorial:${value.slug}:reached`)) || 0;
-      const resume = Math.min(Math.max(0, saved), value.scenes.length - 1);
+      const resume = Math.min(Math.max(0, saved), groupParts(value).length - 1);
       setLesson(value);
       setReached(resume);
-      setCurrentScene(resume);
+      setCurrentPart(resume);
     }).catch((failure) => setError(String(failure)));
   };
   useEffect(() => { fetch('./course.json').then((value) => value.json()).then((value: Course) => {setCourse(value); if (value.sessions[0]) return loadSession(value.sessions[0]);}).catch((failure) => setError(String(failure))); }, []);
@@ -38,6 +41,26 @@ export default function App() {
     if (!lesson) return;
     setCompleted(new Set(lesson.exercises.filter((item) => localStorage.getItem(`autotorial:${lesson.slug}:${item.id}`) === 'complete').map((item) => item.id)));
   }, [lesson]);
+  useEffect(() => {
+    if (!lesson) return;
+    const next = groupParts(lesson)[currentPart + 1];
+    if (!next) return;
+    const warmed = next.scenes.flatMap((item) => lesson.audio.filter((segment) => segment.sceneId === item.id)).map((segment) => { const element = new Audio(staticFile(segment.src)); element.preload = 'auto'; return element; });
+    return () => warmed.forEach((element) => { element.removeAttribute('src'); element.load(); });
+  }, [lesson, currentPart]);
+  useEffect(() => {
+    const current = player.current;
+    if (!current || !lesson) return;
+    const scenes = groupParts(lesson)[currentPart]?.scenes ?? [];
+    const onFrame = (event: {detail: {frame: number}}) => {
+      let offset = 0;
+      let index = scenes.length - 1;
+      for (let i = 0; i < scenes.length; i++) { offset += sceneFrames(scenes[i]); if (event.detail.frame < offset) { index = i; break; } }
+      setSubIndex((previous) => previous === index ? previous : index);
+    };
+    current.addEventListener('frameupdate', onFrame);
+    return () => current.removeEventListener('frameupdate', onFrame);
+  }, [lesson, currentPart]);
   useEffect(() => {
     const current = player.current;
     if (!current) return;
@@ -50,16 +73,19 @@ export default function App() {
     current.addEventListener('play', onPlay);
     current.addEventListener('fullscreenchange', onFullscreen);
     return () => { current.removeEventListener('ended', onEnded); current.removeEventListener('play', onPlay); current.removeEventListener('fullscreenchange', onFullscreen); };
-  }, [lesson, currentScene]);
+  }, [lesson, currentPart]);
   if (error) return <main><h1>No se pudo cargar el curso</h1><pre>{error}</pre></main>;
   if (!course || !lesson) return <main><p>Cargando la lección…</p></main>;
-  const scene = lesson.scenes[currentScene];
-  const stepLesson = {...lesson, scenes: [scene], audio: lesson.audio.filter((segment) => segment.sceneId === scene.id)};
-  const stepExercises = lesson.exercises.filter((item) => item.afterScene === scene.id);
+  const parts = groupParts(lesson);
+  const part = parts[currentPart];
+  const sceneIds = new Set(part.scenes.map((item) => item.id));
+  const stepLesson = {...lesson, scenes: part.scenes, audio: lesson.audio.filter((segment) => sceneIds.has(segment.sceneId))};
+  const stepFrames = part.scenes.reduce((total, item) => total + sceneFrames(item), 0);
+  const stepExercises = lesson.exercises.filter((item) => sceneIds.has(item.afterScene));
   const gates = stepExercises.filter(isGate);
   const canContinue = gates.every((item) => completed.has(item.id));
   const pendingCheck = stepExercises.some((item) => item.type === 'checkpoint' && !completed.has(item.id));
-  const isLast = currentScene === lesson.scenes.length - 1;
+  const isLast = currentPart === parts.length - 1;
   const sessionIndex = course.sessions.findIndex((session) => session.slug === lesson.slug);
   const goToSession = (index: number) => {
     const session = course.sessions[index];
@@ -67,11 +93,12 @@ export default function App() {
   };
   const go = (index: number, play = false) => {
     setAutoPlay(play);
-    setCurrentScene(index);
+    setCurrentPart(index);
+    setSubIndex(0);
     stepTop.current?.scrollIntoView({behavior: 'smooth', block: 'start'});
   };
   const advance = () => {
-    const next = currentScene + 1;
+    const next = currentPart + 1;
     if (next > reached) { setReached(next); localStorage.setItem(`autotorial:${lesson.slug}:reached`, String(next)); }
     go(next, true);
   };
@@ -79,8 +106,8 @@ export default function App() {
     localStorage.setItem(`autotorial:${lesson.slug}:${id}`, 'complete');
     setCompleted((previous) => new Set(previous).add(id));
   };
-  const stepDone = (id: string, index: number) => { const own = lesson.exercises.filter((item) => item.afterScene === id && isGate(item)); return own.length > 0 ? own.every((item) => completed.has(item.id)) : index < reached; };
-  const doneCount = lesson.scenes.filter((item, index) => stepDone(item.id, index)).length;
+  const stepDone = (index: number) => { const ids = new Set(parts[index].scenes.map((item) => item.id)); const own = lesson.exercises.filter((item) => ids.has(item.afterScene) && isGate(item)); return own.length > 0 ? own.every((item) => completed.has(item.id)) : index < reached; };
+  const doneCount = parts.filter((item, index) => stepDone(index)).length;
   const resetProgress = () => {
     Object.keys(localStorage).filter((key) => key.startsWith(`autotorial:${lesson.slug}:`)).forEach((key) => localStorage.removeItem(key));
     setCompleted(new Set());
@@ -104,15 +131,15 @@ export default function App() {
       <p className="mobile-title">{titleLines.join(' ')}</p>
       <div className="lesson-layout">
       <aside className="parts" aria-label="Partes de la lección">
-        <div className="parts-head"><span className="eyebrow">Parte {currentScene + 1} de {lesson.scenes.length}</span><div className="parts-progress" role="progressbar" aria-valuemin={0} aria-valuemax={lesson.scenes.length} aria-valuenow={doneCount} aria-label="Partes completadas"><i style={{width: `${(doneCount / lesson.scenes.length) * 100}%`}}/></div></div>
-        <ol>{lesson.scenes.map((item, index) => <li key={item.id}><button type="button" className={`part${index === currentScene ? ' active' : ''}${stepDone(item.id, index) ? ' done' : ''}`} aria-current={index === currentScene ? 'true' : undefined} onClick={() => go(index)}><span className="part-num">{stepDone(item.id, index) ? '✓' : index + 1}</span><span className="part-title">{item.title}</span></button></li>)}</ol>
+        <div className="parts-head"><span className="eyebrow">Parte {currentPart + 1} de {parts.length}</span><div className="parts-progress" role="progressbar" aria-valuemin={0} aria-valuemax={parts.length} aria-valuenow={doneCount} aria-label="Partes completadas"><i style={{width: `${(doneCount / parts.length) * 100}%`}}/></div></div>
+        <ol>{parts.map((item, index) => <li key={item.id}><button type="button" className={`part${index === currentPart ? ' active' : ''}${stepDone(index) ? ' done' : ''}`} aria-current={index === currentPart ? 'true' : undefined} onClick={() => go(index)}><span className="part-num">{stepDone(index) ? '✓' : index + 1}</span><span className="part-title">{item.title}</span></button></li>)}</ol>
       </aside>
       <div ref={stepTop} className="lesson-main">
-      <div className="player-shell"><Player ref={player} key={`${lesson.slug}:${scene.id}`} component={LessonComposition} inputProps={{lesson: stepLesson}} durationInFrames={sceneFrames(scene)} compositionWidth={1280} compositionHeight={720} fps={FPS} controls autoPlay={autoPlay} style={{width: '100%', aspectRatio: '16 / 9'}}/></div>
-      <p className="subtitle">{scene.narration}</p>
+      <div className="player-shell"><Player ref={player} key={`${lesson.slug}:${part.id}`} component={LessonComposition} inputProps={{lesson: stepLesson}} durationInFrames={stepFrames} compositionWidth={1280} compositionHeight={720} fps={FPS} controls autoPlay={autoPlay} style={{width: '100%', aspectRatio: '16 / 9'}}/></div>
+      <p className="subtitle">{(part.scenes[subIndex] ?? part.scenes[0]).narration}</p>
       <div ref={questionsRef} className="step-questions">{stepExercises.map((exercise) => <ExercisePanel key={`${exercise.id}:${resetCount}`} exercise={exercise} done={completed.has(exercise.id)} label={exercise.type === 'authorization' ? 'Autorización' : exercise.type === 'prompt-copy' ? 'Elige y prueba' : exercise.type === 'checkpoint' ? 'Tu turno' : 'Comprueba lo aprendido'} onComplete={() => complete(exercise.id)}/>)}</div>
       <div className="step-actions">
-        <button className="secondary" disabled={currentScene === 0} onClick={() => go(currentScene - 1)}>← Anterior</button>
+        <button className="secondary" disabled={currentPart === 0} onClick={() => go(currentPart - 1)}>← Anterior</button>
         {isLast ? <span className={canContinue ? 'assessment-complete' : 'step-hint'}>{canContinue ? '✓ Lección completada' : pendingCheck ? 'Marca la casilla cuando lo hayas hecho' : 'Responde la pregunta para terminar'}</span>
           : <>{!canContinue && <span className="step-hint">{pendingCheck ? 'Marca la casilla cuando lo hayas hecho para continuar' : 'Responde la pregunta para continuar'}</span>}<button className="primary" disabled={!canContinue} onClick={() => advance()}>Continuar →</button></>}
       </div>

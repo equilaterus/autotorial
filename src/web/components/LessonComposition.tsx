@@ -44,6 +44,6 @@ export function LessonComposition({lesson}: {lesson: ProducedLesson}) {
     const from = offset;
     offset += sceneFrames(scene);
     const audio = lesson.audio.find((segment) => segment.sceneId === scene.id);
-    return <Sequence key={scene.id} from={from} durationInFrames={sceneFrames(scene)}><SceneCard scene={scene} slug={lesson.slug}/>{audio && <Sequence from={Math.round(AUDIO_LEAD_IN * FPS)}><Audio src={staticFile(audio.src)}/></Sequence>}</Sequence>;
+    return <Sequence key={scene.id} from={from} durationInFrames={sceneFrames(scene)}><SceneCard scene={scene} slug={lesson.slug}/>{audio && <Sequence from={Math.round(AUDIO_LEAD_IN * FPS)}><Audio src={staticFile(audio.src)} pauseWhenBuffering/></Sequence>}</Sequence>;
   })}</AbsoluteFill>;
 }

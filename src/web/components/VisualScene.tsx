@@ -215,6 +215,22 @@ function BrowserPage({items, steps = []}: {items: VisualItem[]; steps?: string[]
 const Tag = ({children}: {children: React.ReactNode}) => <span style={{display: 'inline-block', padding: '6px 16px', borderRadius: 999, background: c.accent, color: '#201713', fontSize: 24, fontWeight: 700, letterSpacing: 1}}>{children}</span>;
 
 /** Frontend: a mock app in a browser, with each kind of element named on the right. */
+/** The parts of a good prompt; the focused one is the one the lesson stresses. */
+function PromptAnatomy({items, focus = -1}: {items: VisualItem[]; focus?: number}) {
+  const {show} = useStage();
+  return <div style={{display: 'grid', gap: 14}}>
+    {items.map((item, i) => {
+      const hot = i === focus;
+      return <div key={item.label} style={{...show(0.06 + i * 0.14), display: 'grid', gridTemplateColumns: '64px 330px 1fr auto', alignItems: 'center', gap: 22, padding: '18px 26px', borderRadius: 16, background: hot ? '#2a2230' : c.panel, border: `${hot ? 3 : 1}px solid ${hot ? c.accent : c.border}`}}>
+        <span style={{fontSize: 46}}>{item.icon}</span>
+        <span style={{fontSize: 32, fontWeight: 600}}>{item.label}</span>
+        <span style={{fontSize: 27, color: hot ? c.text : c.muted, fontFamily: mono}}>«{item.detail}»</span>
+        {hot && <span style={{padding: '5px 14px', borderRadius: 999, background: c.accent, color: '#201713', fontSize: 20, fontWeight: 700, letterSpacing: 1}}>MUY IMPORTANTE</span>}
+      </div>;
+    })}
+  </div>;
+}
+
 function Frontend({items, cards = []}: {items: VisualItem[]; cards?: VisualItem[]}) {
   const {show} = useStage();
   return <div style={{display: 'grid', gridTemplateColumns: '1.45fr 1fr', gap: 36, alignItems: 'center'}}>
@@ -407,6 +423,7 @@ export function VisualScene({scene, slug}: {scene: VisualSceneData; slug: string
     : scene.visual === 'open-folder' ? <OpenFolder items={items}/>
     : scene.visual === 'open-chat' ? <OpenChat items={items}/>
     : scene.visual === 'browser-page' ? <BrowserPage items={items} steps={scene.steps}/>
+    : scene.visual === 'prompt-anatomy' ? <PromptAnatomy items={items} focus={scene.focus}/>
     : scene.visual === 'frontend' ? <Frontend items={items} cards={scene.cards}/>
     : scene.visual === 'backend' ? <Backend items={items} steps={scene.steps}/>
     : scene.visual === 'database' ? <Database items={items} steps={scene.steps}/>
