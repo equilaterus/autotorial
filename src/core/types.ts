@@ -46,7 +46,7 @@ export interface VisualItem {
   steps?: string[];
 }
 
-export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'agent-work' | 'app-preview' | 'prompt-flow' | 'choices';
+export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'app-preview' | 'prompt-flow' | 'choices';
 
 export interface VisualScene extends BaseScene {
   type: 'visual';

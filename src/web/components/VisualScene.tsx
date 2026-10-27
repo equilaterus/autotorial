@@ -76,11 +76,11 @@ function BrowserDownload({items}: {items: VisualItem[]}) {
 function Installer({items}: {items: VisualItem[]}) {
   const {show} = useStage();
   return <div style={{display: 'grid', gridTemplateColumns: `repeat(${items.length}, 1fr)`, gap: 22}}>
-    {items.map((item, col) => <div key={item.label} style={{...show(0.04 + col * 0.2), background: c.panel, border: `1px solid ${c.border}`, borderRadius: 16, padding: 22}}>
-      <div style={{display: 'flex', alignItems: 'center', gap: 12, fontSize: 32, marginBottom: 14}}><span style={{fontSize: 46}}>{item.icon}</span>{item.label}</div>
+    {items.map((item, col) => <div key={item.label} style={{...show(0.04 + col * 0.2), background: c.panel, border: `1px solid ${c.border}`, borderRadius: 16, padding: 18}}>
+      <div style={{display: 'flex', alignItems: 'center', gap: 12, fontSize: 28, marginBottom: 10}}><span style={{fontSize: 38}}>{item.icon}</span>{item.label}</div>
       {item.steps?.map((step, i) => {
         const isCommand = step.startsWith('$ ');
-        return <div key={step} style={{...show(0.1 + col * 0.2 + i * 0.07), display: 'flex', gap: 12, alignItems: 'center', marginTop: 10, padding: '10px 12px', background: c.raised, borderRadius: 10, fontSize: isCommand ? 18 : 22, fontFamily: isCommand ? mono : undefined, color: isCommand ? c.soft : c.text}}>
+        return <div key={step} style={{...show(0.1 + col * 0.2 + i * 0.07), display: 'flex', gap: 12, alignItems: 'center', marginTop: 7, padding: '7px 10px', background: c.raised, borderRadius: 8, fontSize: isCommand ? 16 : 19, fontFamily: isCommand ? mono : undefined, color: isCommand ? c.soft : c.text}}>
           <span style={{flex: '0 0 auto', display: 'grid', placeItems: 'center', width: 30, height: 30, borderRadius: '50%', background: c.accent, color: '#201713', fontWeight: 700, fontSize: 17}}>{i + 1}</span><span style={{wordBreak: 'break-word'}}>{step}</span>
         </div>;
       })}
@@ -88,61 +88,104 @@ function Installer({items}: {items: VisualItem[]}) {
   </div>;
 }
 
-const ActivityBar = ({active}: {active: 'files' | 'extensions'}) => <div style={{width: 64, background: '#1b1b19', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 18, alignItems: 'center', fontSize: 28}}>
-  <span style={{opacity: active === 'files' ? 1 : 0.4, borderLeft: active === 'files' ? `3px solid ${c.accent}` : 'none', paddingLeft: 6}}>📁</span>
-  <span style={{opacity: active === 'extensions' ? 1 : 0.4, borderLeft: active === 'extensions' ? `3px solid ${c.accent}` : 'none', paddingLeft: 6}}>🧩</span><span style={{opacity: 0.4}}>⚙️</span>
-</div>;
+const vs = {title: '#3c3c3c', activity: '#333333', side: '#252526', editor: '#1e1e1e', status: '#007acc', line: '#2b2b2b', text: '#cccccc', dim: '#8b8b8b', blue: '#0e639c', input: '#3c3c3c', claude: '#d97757'};
+
+const Icon = ({d, active}: {d: string; active?: boolean}) => <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={active ? '#fff' : '#858585'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={d}/></svg>;
+const ICONS = {
+  files: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5',
+  search: 'M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM15.5 15.5 21 21',
+  git: 'M6 3v12M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 9c0 6-12 3-12 6',
+  run: 'M7 4l12 8-12 8zM4 4v16',
+  extensions: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM15 13h5M17.5 10.5v5',
+};
+
+function VsCode({title, active, side, children, status = 'Listo', modal, toast, spark}: {title: string; active: keyof typeof ICONS; side: React.ReactNode; children: React.ReactNode; status?: string; modal?: React.ReactNode; toast?: React.ReactNode; spark?: React.ReactNode}) {
+  return <div style={{position: 'relative', background: vs.editor, border: `1px solid ${c.border}`, borderRadius: 10, overflow: 'hidden', boxShadow: '0 24px 70px #0007', color: vs.text, fontFamily: '"Segoe UI", ui-sans-serif, system-ui, sans-serif'}}>
+    <div style={{display: 'flex', alignItems: 'center', gap: 18, padding: '7px 14px', background: vs.title, fontSize: 17}}>
+      <span style={{display: 'flex', gap: 7}}>{['#ef6b5f', '#e5c06a', '#7bc67e'].map((color) => <i key={color} style={{width: 12, height: 12, borderRadius: '50%', background: color}}/>)}</span>
+      {['Archivo', 'Editar', 'Selección', 'Ver', 'Ir', 'Ejecutar', 'Terminal', 'Ayuda'].map((item) => <span key={item}>{item}</span>)}
+      <span style={{flex: 1, textAlign: 'center', color: vs.dim}}>{title}</span>
+    </div>
+    <div style={{display: 'flex', height: 410}}>
+      <div style={{width: 58, background: vs.activity, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 6}}>
+        {(Object.keys(ICONS) as Array<keyof typeof ICONS>).map((key) => <div key={key} style={{width: 58, height: 52, display: 'grid', placeItems: 'center', borderLeft: `2px solid ${key === active ? '#fff' : 'transparent'}`}}><Icon d={ICONS[key]} active={key === active}/></div>)}
+      </div>
+      <div style={{width: 330, background: vs.side, padding: '10px 0', overflow: 'hidden'}}>{side}</div>
+      <div style={{flex: 1, position: 'relative', minWidth: 0}}>
+        <div style={{display: 'flex', alignItems: 'center', height: 36, background: vs.side, fontSize: 16}}>
+          <span style={{padding: '0 18px', lineHeight: '36px', background: vs.editor, borderTop: `1px solid ${vs.status}`}}>Bienvenida</span><span style={{flex: 1}}/>{spark}
+        </div>
+        <div style={{height: 374}}>{children}</div>
+      </div>
+    </div>
+    <div style={{background: vs.status, color: '#fff', fontSize: 15, padding: '3px 14px'}}>{status}</div>
+    {modal}{toast}
+  </div>;
+}
+
+const SideTitle = ({children}: {children: React.ReactNode}) => <div style={{padding: '0 18px 10px', fontSize: 14, letterSpacing: 1, color: vs.dim}}>{children}</div>;
+const Spark = ({size = 26, bg = vs.claude}: {size?: number; bg?: string}) => <span style={{display: 'inline-grid', placeItems: 'center', width: size, height: size, borderRadius: size / 4, background: bg, color: '#1a1a1a', fontSize: size * 0.7, fontWeight: 700}}>✺</span>;
+const Button = ({children, hot}: {children: React.ReactNode; hot?: boolean}) => <span style={{display: 'inline-block', padding: '7px 18px', borderRadius: 3, background: vs.blue, color: '#fff', fontSize: 17, outline: hot ? `3px solid ${c.accent}` : 'none', outlineOffset: 2}}>{children}</span>;
 
 function Extensions({items}: {items: VisualItem[]}) {
   const {p, show} = useStage();
-  const typed = p > 0.12;
-  const installed = p > 0.5;
-  const login = p > 0.68;
-  return <Window title="Extensiones — Visual Studio Code" style={{position: 'relative'}}>
-    <div style={{display: 'flex', height: 420}}>
-      <ActivityBar active="extensions"/>
-      <div style={{width: 520, borderRight: `1px solid ${c.border}`, padding: 18}}>
-        <div style={{fontSize: 18, color: c.muted, letterSpacing: 2, marginBottom: 10}}>EXTENSIONES <span style={{...show(0.02), color: c.soft, letterSpacing: 0}}>· Ctrl+Shift+X</span></div>
-        <div style={{padding: '9px 14px', background: c.raised, borderRadius: 6, fontSize: 22, marginBottom: 16, color: typed ? c.text : c.muted}}>🔍 {typed ? 'Claude Code' : 'Buscar extensiones…'}</div>
-        {items.map((ext, i) => <div key={ext.label} style={{...show(0.15 + i * 0.06), display: 'flex', gap: 12, alignItems: 'center', padding: 12, background: c.panel, borderRadius: 8, marginBottom: 10}}>
-          <span style={{fontSize: 38}}>{ext.icon}</span><div style={{flex: 1}}><div style={{fontSize: 24}}>{ext.label}</div><div style={{fontSize: 17, color: c.muted}}>{ext.detail}</div></div>
-          <span style={{padding: '8px 18px', borderRadius: 6, fontSize: 20, background: installed ? c.ok : c.blue, color: '#10100f', fontWeight: 600}}>{installed ? '✓ Instalada' : 'Instalar'}</span>
-        </div>)}
-      </div>
-      <div style={{flex: 1, padding: 30, display: 'grid', placeItems: 'center'}}>
-        {login ? <div style={{...show(0.68), textAlign: 'center', padding: 28, border: `1px dashed ${c.accent}`, borderRadius: 14}}><div style={{fontSize: 60}}>🔑</div><div style={{fontSize: 28}}>Iniciar sesión</div><div style={{fontSize: 20, color: c.muted, marginTop: 6}}>con tu cuenta de Claude o de ChatGPT</div></div>
-          : <div style={{fontSize: 24, color: c.muted, textAlign: 'center'}}>Busca <b style={{color: c.text}}>Codex</b> o <b style={{color: c.text}}>Claude Code</b><br/>y pulsa Instalar</div>}
-      </div>
+  const installed = p > 0.45;
+  return <VsCode title="Visual Studio Code" active="extensions"
+    side={<><SideTitle>EXTENSIONES: MARKETPLACE</SideTitle>
+      <div style={{margin: '0 14px 12px', padding: '7px 10px', background: vs.input, borderRadius: 2, fontSize: 17, border: `1px solid ${vs.status}`}}>{p > 0.1 ? 'Claude Code' : <span style={{color: vs.dim}}>Buscar extensiones en Marketplace</span>}</div>
+      {items.map((ext, i) => <div key={ext.label} style={{...show(0.12 + i * 0.05), display: 'flex', gap: 10, padding: '9px 14px', background: i === 0 ? '#37373d' : 'transparent'}}>
+        <Spark size={44} bg={i === 0 ? vs.claude : '#e6e6e6'}/>
+        <div style={{flex: 1, minWidth: 0}}><div style={{fontSize: 18, fontWeight: 600}}>{ext.label}</div><div style={{fontSize: 14, color: vs.dim}}>{ext.detail}</div>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4}}><span style={{fontSize: 14, color: vs.dim}}>{i === 0 ? 'Anthropic ✔' : 'OpenAI ✔'}</span>
+            {i === 0 ? <Button hot={!installed && p > 0.3}>{installed ? 'Instalada ✓' : 'Instalar'}</Button> : <Button>Instalar</Button>}</div></div>
+      </div>)}</>}
+    toast={installed ? <div style={{...show(0.45), position: 'absolute', right: 18, bottom: 40, width: 380, padding: 16, background: '#252526', border: `1px solid ${c.border}`, borderRadius: 6, fontSize: 18, boxShadow: '0 10px 30px #000a'}}>Claude Code se instaló. Inicia sesión para empezar.<div style={{marginTop: 10, display: 'flex', gap: 10}}><Button hot={p > 0.7}>Iniciar sesión</Button></div></div> : undefined}>
+    <div style={{height: '100%', display: 'grid', placeItems: 'center', textAlign: 'center', padding: 30}}>
+      <div><div style={{fontSize: 38, color: vs.text, marginBottom: 10}}>Visual Studio Code</div><div style={{fontSize: 20, color: vs.dim}}>Ctrl+Shift+X abre el panel de Extensiones.<br/>Escribe «Claude Code» o «Codex» y pulsa Instalar.</div></div>
     </div>
-    <Cursor x={560} y={185} at={0.45}/>
-  </Window>;
+  </VsCode>;
 }
 
 function OpenFolder({items}: {items: VisualItem[]}) {
   const {p, show} = useStage();
-  const menu = p > 0.12 && p < 0.5;
-  const opened = p > 0.5;
-  return <Window title={opened ? 'mis-videojuegos — Visual Studio Code' : 'Visual Studio Code'} style={{position: 'relative'}}>
-    <div style={{display: 'flex', gap: 22, padding: '8px 18px', background: c.raised, fontSize: 20, position: 'relative'}}>
-      <span style={{color: menu ? c.accent : c.text}}>Archivo</span><span>Editar</span><span>Selección</span><span>Ver</span>
-      {menu && <div style={{...show(0.12), position: 'absolute', top: 38, left: 14, zIndex: 2, width: 300, background: c.panel, border: `1px solid ${c.border}`, borderRadius: 8, padding: 8, fontSize: 21}}>
-        <div style={{padding: 6}}>Nuevo archivo</div><div style={{padding: 6, background: c.blue, borderRadius: 4}}>Abrir carpeta…</div><div style={{padding: 6}}>Guardar</div>
+  const name = items[0]?.label ?? 'mis-videojuegos';
+  const dialog = p > 0.25 && p < 0.62;
+  const trust = p >= 0.62 && p < 0.82;
+  const opened = p >= 0.82;
+  const typed = name.slice(0, Math.max(0, Math.round((p - 0.35) / 0.15 * name.length)));
+  const modalFrame = (children: React.ReactNode, w: number) => <div style={{position: 'absolute', inset: 0, background: '#0008', display: 'grid', placeItems: 'center'}}><div style={{width: w, background: '#f3f3f3', color: '#222', borderRadius: 8, boxShadow: '0 20px 60px #000b', overflow: 'hidden', fontSize: 19}}>{children}</div></div>;
+  return <VsCode title={opened ? `${name} — Visual Studio Code` : 'Visual Studio Code'} active="files" status={opened ? '' : 'Listo'}
+    side={opened ? <><SideTitle>EXPLORADOR</SideTitle><div style={{...show(0.82), padding: '4px 18px', fontSize: 17, fontWeight: 600}}>▾ {name.toUpperCase()}</div><div style={{padding: '4px 34px', color: vs.dim, fontSize: 15}}>La carpeta está vacía</div></>
+      : <><SideTitle>EXPLORADOR</SideTitle><div style={{padding: '0 18px', fontSize: 17, color: vs.dim, lineHeight: 1.6}}>Aún no has abierto una carpeta.<div style={{marginTop: 12}}><Button hot={p < 0.25}>Abrir carpeta</Button></div></div></>}
+    modal={dialog ? modalFrame(<>
+      <div style={{padding: '12px 18px', background: '#e4e4e4', fontWeight: 600}}>Abrir carpeta</div>
+      <div style={{padding: '14px 18px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: '1px solid #ddd'}}><span style={{color: '#666'}}>Carpeta:</span><span style={{flex: 1, padding: '5px 10px', background: '#fff', border: '1px solid #ccc'}}>Inicio › Documentos</span>
+        <span style={{padding: '6px 12px', border: `2px solid ${p < 0.35 ? c.accent : '#bbb'}`, borderRadius: 4, background: '#fff'}}>📁＋ Nueva carpeta</span></div>
+      <div style={{padding: '12px 18px', minHeight: 110}}><div style={{color: '#777'}}>📁 Proyectos</div>{p >= 0.35 && <div style={{marginTop: 8, padding: '4px 8px', background: '#cfe3f7', display: 'inline-block'}}>📁 {typed}<span style={{opacity: 0.6}}>|</span></div>}</div>
+      <div style={{padding: '12px 18px', display: 'flex', justifyContent: 'flex-end', gap: 12, background: '#ececec'}}><span style={{padding: '6px 18px', border: '1px solid #bbb', borderRadius: 4, background: '#fff'}}>Cancelar</span><span style={{padding: '6px 18px', borderRadius: 4, background: '#0e639c', color: '#fff', outline: p > 0.52 ? `3px solid ${c.accent}` : 'none'}}>Abrir</span></div></>, 620)
+      : trust ? modalFrame(<div style={{padding: 26}}><div style={{fontWeight: 600, fontSize: 22, marginBottom: 10}}>¿Confías en los autores de los archivos de esta carpeta?</div><div style={{color: '#555', marginBottom: 18}}>Es tu propia carpeta, así que puedes confiar en ella.</div><div style={{display: 'flex', gap: 12}}><span style={{padding: '8px 18px', borderRadius: 3, background: '#0e639c', color: '#fff', outline: `3px solid ${c.accent}`, outlineOffset: 2}}>Sí, confío en los autores</span><span style={{padding: '8px 18px', border: '1px solid #bbb', borderRadius: 3}}>No, no confío</span></div></div>, 640) : undefined}>
+    <div style={{height: '100%', display: 'grid', placeItems: 'center', textAlign: 'center'}}>
+      {opened ? <div style={{fontSize: 20, color: vs.dim}}>Carpeta abierta: <b style={{color: vs.text}}>{name}</b></div>
+        : <div style={{fontSize: 34}}>Bienvenida<div style={{fontSize: 20, color: vs.dim, marginTop: 10}}>Iniciar · Abrir carpeta…</div></div>}
+    </div>
+  </VsCode>;
+}
+
+function OpenChat({items}: {items: VisualItem[]}) {
+  const {p, show} = useStage();
+  const name = items[0]?.label ?? 'mis-videojuegos';
+  const chat = p > 0.4;
+  return <VsCode title={`${name} — Visual Studio Code`} active="files" status=""
+    side={<><SideTitle>EXPLORADOR</SideTitle><div style={{padding: '4px 18px', fontSize: 17, fontWeight: 600}}>▾ {name.toUpperCase()}</div></>}
+    spark={<span style={{display: 'flex', gap: 10, alignItems: 'center', paddingRight: 14, outline: !chat ? `3px solid ${c.accent}` : 'none', outlineOffset: 2, borderRadius: 6, margin: '0 10px'}}><Spark size={26}/></span>}>
+    <div style={{display: 'flex', height: '100%'}}>
+      <div style={{flex: 1, display: 'grid', placeItems: 'center', color: vs.dim, fontSize: 19, textAlign: 'center', padding: 18}}>{chat ? '' : <span>Pulsa el icono <b style={{color: vs.claude}}>✺</b> de arriba a la derecha<br/>(en Codex, el de la barra lateral)</span>}</div>
+      {chat && <div style={{...show(0.4), width: 400, borderLeft: `1px solid ${vs.line}`, background: vs.side, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 16}}>
+        <div><div style={{display: 'flex', gap: 10, alignItems: 'center', fontSize: 20, fontWeight: 600}}><Spark/>Claude Code</div><div style={{fontSize: 17, color: vs.dim, marginTop: 12}}>¿Qué quieres construir hoy?</div></div>
+        <div style={{padding: '12px 14px', border: `1px solid ${vs.status}`, borderRadius: 8, background: vs.input, fontSize: 17, color: vs.dim}}>Pídele algo a Claude…  <span style={{float: 'right'}}>⏎</span></div>
       </div>}
     </div>
-    <div style={{display: 'flex', height: 380}}>
-      <ActivityBar active="files"/>
-      <div style={{width: 400, borderRight: `1px solid ${c.border}`, padding: 18}}>
-        <div style={{fontSize: 18, color: c.muted, letterSpacing: 2, marginBottom: 12}}>EXPLORADOR</div>
-        {!opened ? <div style={{...show(0.3), padding: 12, background: c.panel, borderRadius: 8, fontSize: 21}}>📂 Crea la carpeta <b>mis-videojuegos</b> y selecciónala</div>
-          : <><div style={{...show(0.5), fontSize: 26}}>📂 {items[0]?.label ?? 'mis-videojuegos'}</div><div style={{...show(0.55), color: c.muted, marginTop: 10, fontSize: 18}}>Vacía por ahora</div></>}
-      </div>
-      <div style={{flex: 1, padding: 22, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 12}}>
-        {p > 0.7 && <div style={{...show(0.7), alignSelf: 'flex-start', padding: '12px 16px', background: c.panel, borderRadius: 12, fontSize: 22}}>🤖 ¡Hola! ¿Qué quieres construir?</div>}
-        <div style={{padding: '12px 16px', border: `1px solid ${p > 0.7 ? c.accent : c.border}`, borderRadius: 10, color: c.muted, fontSize: 21}}>Escribe tu mensaje…</div>
-      </div>
-    </div>
-    <Cursor x={80} y={42} at={0.1}/>
-  </Window>;
+  </VsCode>;
 }
 
 function AgentWork({steps = []}: {steps?: string[]}) {
@@ -237,6 +280,7 @@ export function VisualScene({scene}: {scene: VisualSceneData}) {
     : scene.visual === 'installer' ? <Installer items={items}/>
     : scene.visual === 'extensions' ? <Extensions items={items}/>
     : scene.visual === 'open-folder' ? <OpenFolder items={items}/>
+    : scene.visual === 'open-chat' ? <OpenChat items={items}/>
     : scene.visual === 'agent-work' ? <AgentWork steps={scene.steps}/>
     : scene.visual === 'app-preview' ? <AppPreview items={items} checks={scene.steps}/>
     : scene.visual === 'prompt-flow' ? <PromptFlow items={items}/>
