@@ -282,24 +282,39 @@ function Backend({items, steps = []}: {items: VisualItem[]; steps?: string[]}) {
   </div>;
 }
 
-/** Database: rows persist after the app restarts. */
+/** Database: a favorite is written, the app is switched off and on again, and the data is still there. */
 function Database({items, steps = []}: {items: VisualItem[]; steps?: string[]}) {
-  const {p, show} = useStage();
-  const restarted = p > 0.6;
-  return <div style={{display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'center'}}>
-    <div style={{borderRadius: 16, overflow: 'hidden', border: `2px solid ${c.accent}`, background: c.panel}}>
-      <div style={{display: 'flex', gap: 14, alignItems: 'center', padding: '16px 22px', background: c.raised}}><span style={{fontSize: 44}}>🗄️</span><Tag>BASE DE DATOS</Tag><span style={{fontSize: 24, color: c.muted}}>SQLite · tabla «juegos»</span></div>
-      <div style={{display: 'grid', gridTemplateColumns: '64px 2fr 1fr 1fr', gap: 16, padding: '12px 22px', fontSize: 22, color: c.muted, letterSpacing: 1}}><span/><span>TÍTULO</span><span>AÑO</span><span>FAVORITO</span></div>
-      {items.map((item, i) => <div key={item.label} style={{...show(0.08 + i * 0.1), display: 'grid', gridTemplateColumns: '64px 2fr 1fr 1fr', alignItems: 'center', gap: 16, padding: '8px 22px', fontSize: 28, borderTop: `1px solid ${c.border}`, background: i === items.length - 1 ? '#28211e' : 'transparent'}}>
-        <span style={{borderRadius: 6, overflow: 'hidden'}}><Cover item={item} height={64}/></span><span>{item.label}</span><span style={{color: c.muted}}>{item.detail}</span><span style={{color: c.soft}}>{i % 2 ? '♥' : '♡'}</span>
-      </div>)}
+  const {p} = useStage();
+  const stage = p < 0.34 ? 0 : p < 0.67 ? 1 : 2;
+  const [stageTitle, caption] = (steps[stage] ?? '').split('|');
+  const saved = items[1];
+  const on = stage !== 1;
+  const reading = stage === 2;
+  const card = (children: React.ReactNode, lit: boolean, border: string) => <div style={{flex: 1, minWidth: 0, padding: 20, borderRadius: 18, background: c.panel, border: `2px solid ${lit ? border : c.border}`, opacity: lit ? 1 : 0.45, minHeight: 300}}>{children}</div>;
+  const arrow = (label: string, lit: boolean) => <div style={{width: 120, display: 'grid', gap: 6, justifyItems: 'center', color: lit ? c.accent : c.border, textAlign: 'center'}}><span style={{fontSize: 46}}>{lit ? (label === 'lee' ? '←' : '→') : '·'}</span><span style={{fontSize: 20, color: lit ? c.soft : c.border}}>{lit ? label : ''}</span></div>;
+  return <div style={{display: 'grid', gap: 22}}>
+    <div style={{display: 'flex', alignItems: 'center', gap: 18}}>
+      {steps.map((step, i) => <span key={step} style={{padding: '8px 20px', borderRadius: 999, fontSize: 26, background: i === stage ? c.accent : c.panel, color: i === stage ? '#201713' : c.muted, border: `1px solid ${i === stage ? c.accent : c.border}`, fontWeight: i === stage ? 700 : 400}}>{i + 1} · {step.split('|')[0]}</span>)}
     </div>
-    <div style={{display: 'grid', gap: 18}}>
-      {steps.map((step, i) => <div key={step} style={{...show(0.3 + i * 0.35), padding: '22px 24px', borderRadius: 16, background: i === 1 ? '#1f2a1d' : c.panel, border: `1px solid ${i === 1 ? c.ok : c.border}`, fontSize: 30, lineHeight: 1.3}}>
-        <span style={{marginRight: 12}}>{i === 0 ? '⟳' : '✓'}</span>{step}
-      </div>)}
-      {restarted && <div style={{...show(0.6), fontSize: 24, color: c.muted}}>Guardar así, de forma permanente, se llama <b style={{color: c.text}}>persistir</b>.</div>}
+    <div style={{display: 'flex', alignItems: 'stretch', gap: 8}}>
+      {card(<>
+        <div style={{fontSize: 24, color: c.muted, letterSpacing: 2, marginBottom: 12}}>LA APLICACIÓN {on ? '· ENCENDIDA' : '· APAGADA'}</div>
+        <div style={{fontSize: 22, color: c.soft, marginBottom: 12}}>Navegador + backend</div>
+        {on ? <div style={{display: 'flex', gap: 14, alignItems: 'center', padding: 12, borderRadius: 12, background: c.raised}}>
+          <div style={{width: 64, borderRadius: 6, overflow: 'hidden'}}>{saved && <Cover item={saved} ratio="3 / 4"/>}</div>
+          <div style={{fontSize: 26}}>{saved?.label}<div style={{fontSize: 30, color: stage === 0 && p < 0.1 ? c.muted : c.accent}}>{stage === 0 && p < 0.1 ? '♡' : '♥ Favorito'}</div></div>
+        </div> : <div style={{fontSize: 28, color: c.muted, padding: '30px 0', textAlign: 'center'}}>⏻ Memoria vacía</div>}
+      </>, on, c.blue)}
+      {arrow(reading ? 'lee' : 'guarda', stage !== 1)}
+      {card(<>
+        <div style={{display: 'flex', gap: 12, alignItems: 'center', marginBottom: 14}}><span style={{fontSize: 44}}>🗄️</span><div><div style={{fontSize: 26, fontWeight: 600}}>Base de datos</div><div style={{fontSize: 19, color: c.muted}}>SQLite · tabla «favoritos»</div></div></div>
+        <div style={{display: 'grid', gridTemplateColumns: '1.2fr 2fr', fontSize: 19, color: c.muted, letterSpacing: 1, padding: '6px 10px'}}><span>USUARIO</span><span>JUEGO</span></div>
+        {items.slice(0, 1).map((row) => <div key={row.label} style={{display: 'grid', gridTemplateColumns: '1.2fr 2fr', fontSize: 24, padding: '8px 10px', borderTop: `1px solid ${c.border}`}}><span>Ana</span><span>{row.label}</span></div>)}
+        {saved && p > 0.12 && <div style={{display: 'grid', gridTemplateColumns: '1.2fr 2fr', fontSize: 24, padding: '8px 10px', borderTop: `1px solid ${c.border}`, background: '#1f2a1d', color: c.ok}}><span>Ana</span><span>{saved.label}</span></div>}
+        <div style={{marginTop: 16, fontSize: 22, color: stage === 1 ? c.ok : c.muted}}>{stage === 1 ? '💾 Los datos siguen guardados' : stage === 0 ? 'Se escribe una fila nueva' : 'Se leen las filas guardadas'}</div>
+      </>, true, c.accent)}
     </div>
+    <div style={{fontSize: 30, color: c.text, textAlign: 'center', minHeight: 40}}><b style={{color: c.accent}}>{stageTitle}:</b> {caption}</div>
   </div>;
 }
 
