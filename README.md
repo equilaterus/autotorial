@@ -16,7 +16,7 @@ npm run build --prefix lib/autotorial
 ./lib/autotorial/install.sh
 ```
 
-The installer detects the superproject, creates relative project-only skill links under `.agents/skills/` and `.claude/skills/`, links `.autotorial/autotorial`, adds `/bin/` to the host `.gitignore`, and installs a Pages workflow only when that path is free. It never replaces unrelated files. Running it again is safe. The default workflow expects the conventional `lib/autotorial` submodule path.
+The installer detects the superproject, creates relative project-only skill links under `.agents/skills/` and `.claude/skills/`, links `.autotorial/autotorial` and `.autotorial/deploy-pages`, and adds `/bin/` to the host `.gitignore`. It never creates a GitHub Actions deployment workflow or replaces unrelated files. Running it again is safe. The installed commands use relative links to the conventional `lib/autotorial` submodule path.
 
 Update to an already known tag/ref with `./lib/autotorial/update.sh <revision>`. The updater refuses dirty submodule/pointer state, fetches tags, checks out the exact commit, and reconciles links; it never commits or pushes. Inspect with `--dry-run` first.
 
@@ -57,6 +57,8 @@ ElevenLabs is optional. Keep the key only in `ELEVENLABS_API_KEY`. The first com
 ```bash
 .autotorial/autotorial publish
 .autotorial/autotorial render session-1 --format mp4
+.autotorial/deploy-pages --check-only
+.autotorial/deploy-pages
 ```
 
 Publication refuses missing, invalid, stale, or incomplete audio output, then creates a backend-free site at `bin/autotorial/site/` with relative asset paths suitable for project Pages. It does not deploy, commit, push, or invoke remote Git operations. In the final repository, the deployment script publishes the complete existing root `bin/` snapshot without producing the lesson again.
@@ -65,7 +67,7 @@ MP4 rendering is secondary and may download/use a compatible Chromium through Re
 
 Set `REMOTION_BROWSER_EXECUTABLE=/absolute/path/to/chromium` to reuse an installed Chromium. Rendering enforces an audio track, and the deployment script rejects MP4 files whose audio stream is missing, silent, or unreadable.
 
-The already-generated root `bin/` snapshot can be published without regenerating it. See [GitHub Pages deployment](docs/DEPLOYMENT.md).
+The already-generated root `bin/` snapshot can be published without regenerating it. The deployment script is the only supported deployment path: do not create a GitHub Actions workflow for AutoTorial. See [GitHub Pages deployment](docs/DEPLOYMENT.md).
 
 ## Agent skills
 

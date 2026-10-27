@@ -49,7 +49,8 @@ Implement two scripts:
 - Support repeated executions without side effects.
 - Never overwrite unrelated files.
 - Detect missing dependencies and provide setup instructions.
-- Install or configure the local CLI and GitHub Pages workflow.
+- Install the local CLI and a project-local link to the deployment script.
+- Never create or configure a GitHub Actions workflow for AutoTorial deployment.
 - Do not change global agent configurations.
 - Support `--dry-run`.
 
@@ -233,13 +234,13 @@ autotorial render session-1 --format mp4
 
 The CLI must operate on the host repository's `lessons/` directory.
 
-Generate a GitHub Actions workflow for publishing the host repository to GitHub Pages.
+Provide one local deployment script for publishing the host repository to GitHub Pages. Install it as `.autotorial/deploy-pages`. Never generate, edit, or require a GitHub Actions deployment workflow.
 
 Support multiple sessions, a course index, and correct asset paths for project Pages URLs.
 
 Publishing must not depend on a running server.
 
-No automatic remote Git operations.
+No automatic remote Git operations. The deployment script may push only after an explicit deployment request.
 
 ## 9. Hello World — Functional acceptance test
 

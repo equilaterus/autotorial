@@ -1,5 +1,10 @@
 # GitHub Pages deployment
 
+The repository script is the only supported AutoTorial deployment mechanism.
+Do not create or configure a GitHub Actions workflow to deploy an AutoTorial
+site. Hosted jobs cannot access the ignored local media snapshot and must not
+rebuild it with a submodule lockfile or a different dependency graph.
+
 The standalone repository stores its already-generated deployable website
 directly under the ignored root `bin/` directory. When AutoTorial is installed
 as a submodule, the script automatically uses the host repository's existing
@@ -15,6 +20,9 @@ remote repository:
 
 # From a host repository that uses lib/autotorial:
 lib/autotorial/run/deploy-pages.sh --check-only
+
+# Equivalent command after running install.sh:
+.autotorial/deploy-pages --check-only
 ```
 
 This checks the existing `bin/` snapshot, including at least one `.mp4` under
@@ -30,6 +38,9 @@ To publish that local snapshot:
 
 # From a host repository that uses lib/autotorial:
 lib/autotorial/run/deploy-pages.sh
+
+# Equivalent command after running install.sh:
+.autotorial/deploy-pages
 ```
 
 The script publishes the contents of `bin/` as the branch root and force-pushes
@@ -56,4 +67,6 @@ https://equilaterus.github.io/autotorial/video/session-1.mp4
 The repository currently uses `dev` and has no remote `main` branch. A hosted
 GitHub Actions run also cannot read ignored local files, so deployment is
 deliberately initiated by this local script from the final repository that
-contains the complete local `bin/` snapshot.
+contains the complete local `bin/` snapshot. If the script fails, fix the
+reported validation or remote error; do not work around it by adding a
+workflow.

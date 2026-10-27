@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-framework_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+script_path="${BASH_SOURCE[0]}"
+while [[ -L "$script_path" ]]; do
+  script_dir="$(cd "$(dirname "$script_path")" && pwd)"
+  script_path="$(readlink "$script_path")"
+  [[ "$script_path" = /* ]] || script_path="$script_dir/$script_path"
+done
+framework_root="$(cd "$(dirname "$script_path")/.." && pwd)"
 host_root="$(git -C "$framework_root" rev-parse --show-superproject-working-tree 2>/dev/null || true)"
 if [[ -n "$host_root" ]]; then
   repo_root="$host_root"

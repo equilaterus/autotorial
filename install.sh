@@ -72,21 +72,19 @@ ensure_line() {
   [[ -f "$file" ]] && grep -Fqx "$line" "$file" && { echo "ok: $line in $file"; return; }
   if [[ $DRY_RUN == 1 ]]; then echo "append '$line' to $file"; else printf '%s\n' "$line" >> "$file"; fi
 }
-ensure_file() {
-  local source="$1" destination="$2"
-  if [[ -e "$destination" ]]; then echo "ok: preserved existing $destination"; return; fi
-  do_mkdir "$(dirname "$destination")"
-  if [[ $DRY_RUN == 1 ]]; then echo "copy $source to $destination"; else cp "$source" "$destination"; fi
-}
-
 for skill in create-content produce-session voice publish-session; do
   ensure_link "$SCRIPT_DIR/skills/$skill" "$HOST_ROOT/.agents/skills/$skill"
   ensure_link "$SCRIPT_DIR/skills/$skill" "$HOST_ROOT/.claude/skills/$skill"
 done
 migrate_legacy_cli
 ensure_link "$SCRIPT_DIR/dist/cli.js" "$HOST_ROOT/.autotorial/autotorial"
-ensure_file "$SCRIPT_DIR/templates/autotorial-pages.yml" "$HOST_ROOT/.github/workflows/autotorial-pages.yml"
+ensure_link "$SCRIPT_DIR/run/deploy-pages.sh" "$HOST_ROOT/.autotorial/deploy-pages"
 ensure_line "/bin/" "$HOST_ROOT/.gitignore"
+
+if [[ -e "$HOST_ROOT/.github/workflows/autotorial-pages.yml" ]]; then
+  echo "warning: obsolete AutoTorial deployment workflow found at $HOST_ROOT/.github/workflows/autotorial-pages.yml" >&2
+  echo "warning: remove it after review; deploy only with .autotorial/deploy-pages" >&2
+fi
 
 if [[ ! -d "$SCRIPT_DIR/node_modules" || ! -f "$SCRIPT_DIR/dist/cli.js" ]]; then
   echo "Setup required in $SCRIPT_DIR: npm ci && npm run build"
