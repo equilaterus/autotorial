@@ -44,7 +44,8 @@ describe.skipIf(!hasEspeak)('Hello World host acceptance', () => {
     const assetsDir = path.join(host, 'bin', 'autotorial', 'site', 'assets');
     const scripts = (await readdir(assetsDir)).filter((file) => file.endsWith('.js'));
     const publishedJavaScript = (await Promise.all(scripts.map((file) => readFile(path.join(assetsDir, file), 'utf8')))).join('\n');
-    expect(publishedJavaScript).toContain('Evaluación final');
+    expect(publishedJavaScript).toContain('Comprueba lo aprendido');
+    expect(publishedJavaScript).not.toContain('Versión audiovisual');
     expect(publishedJavaScript).toContain('Anterior');
     expect(publishedJavaScript).toContain('Siguiente');
     expect(publishedJavaScript).toContain('remotion_staticBase');
