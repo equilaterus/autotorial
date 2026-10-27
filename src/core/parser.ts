@@ -34,6 +34,7 @@ export async function parseLesson(hostRoot: string, slug: string): Promise<{less
       schemaVersion: 1,
       slug,
       title: String(attributes.title ?? ''),
+      ...(typeof attributes.courseTitle === 'string' && attributes.courseTitle.trim() ? {courseTitle: attributes.courseTitle.trim()} : {}),
       language: String(attributes.language ?? 'en'),
       objectives: Array.isArray(attributes.objectives) ? attributes.objectives.map(String) : [],
       prerequisites: Array.isArray(attributes.prerequisites) ? attributes.prerequisites.map(String) : [],
@@ -58,11 +59,12 @@ export function validateLesson(lesson: LessonDefinition): ValidationIssue[] {
     if (!isText(scene.id)) error(`${base}.id`, 'is required');
     else if (sceneIds.has(scene.id)) error(`${base}.id`, 'must be unique');
     else sceneIds.add(scene.id);
-    if (!['concept', 'code', 'diagram', 'terminal'].includes(scene.type)) error(`${base}.type`, 'is invalid');
+    if (!['concept', 'code', 'diagram', 'terminal', 'visual'].includes(scene.type)) error(`${base}.type`, 'is invalid');
     if (!isText(scene.title)) error(`${base}.title`, 'is required');
     if (!isText(scene.narration)) error(`${base}.narration`, 'is required');
     if (scene.type === 'code' && !isText(scene.code)) error(`${base}.code`, 'is required');
     if (scene.type === 'diagram' && (!scene.nodes?.length || !Array.isArray(scene.edges))) error(base, 'diagram requires nodes and edges');
+    if (scene.type === 'visual' && !['timeline', 'os-download', 'editor-setup', 'app-preview', 'prompt-flow', 'choices'].includes(scene.visual)) error(`${base}.visual`, 'is invalid');
     if (scene.type === 'terminal' && (!isText(scene.command) || typeof scene.output !== 'string')) error(base, 'terminal requires command and output');
   });
   const exerciseIds = new Set<string>();

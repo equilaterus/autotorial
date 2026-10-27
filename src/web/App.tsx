@@ -4,7 +4,7 @@ import type {ProducedLesson} from '../core/types';
 import {ExercisePanel} from './components/ExercisePanel';
 import {FPS, LessonComposition, sceneFrames} from './components/LessonComposition';
 
-interface CourseSession {slug: string; title: string; href: string; videoHref?: string}
+interface CourseSession {slug: string; title: string; href: string}
 interface Course {sessions: CourseSession[]}
 
 export default function App() {
@@ -54,7 +54,6 @@ export default function App() {
   if (!course || !lesson) return <main><p>Cargando la lección…</p></main>;
   const duration = lesson.scenes.reduce((total, scene) => total + sceneFrames(scene), 0);
   const sessionIndex = course.sessions.findIndex((session) => session.slug === lesson.slug);
-  const activeSession = course.sessions[sessionIndex];
   const goToSession = (index: number) => {
     const session = course.sessions[index];
     if (session) void loadSession(session);
@@ -71,7 +70,7 @@ export default function App() {
     <a className="site-logo" href="https://thescienceofcode.com/" target="_blank" rel="noreferrer" aria-label="The Science of Code">
       <img src="https://thescienceofcode.com/images/the-science-of-code.png" alt="The Science of Code" />
     </a>
-    <div className="lesson-heading"><span className="brand">Autotorial · Lección interactiva</span><h1>{lesson.title}</h1></div>
+    <div className="lesson-heading">{lesson.courseTitle ? <h1>{lesson.courseTitle.split('\n').map((line, index) => <span key={line} className={index === 0 ? 'course-kicker' : undefined}>{line}</span>)}</h1> : <h1>{lesson.title}</h1>}</div>
     <div className="session-controls">
       <label className="lesson-picker"><span>Seleccionar lección</span><select value={lesson.slug} onChange={(event) => {const session = course.sessions.find((item) => item.slug === event.target.value); if (session) void loadSession(session);}}>{course.sessions.map((session) => <option key={session.slug} value={session.slug}>{session.title}</option>)}</select></label>
       {course.sessions.length > 1 && <nav className="session-pagination" aria-label="Navegación entre sesiones"><button disabled={sessionIndex <= 0} onClick={() => goToSession(sessionIndex - 1)}>← Anterior</button><span>{sessionIndex + 1} / {course.sessions.length}</span><button disabled={sessionIndex >= course.sessions.length - 1} onClick={() => goToSession(sessionIndex + 1)}>Siguiente →</button></nav>}
@@ -81,6 +80,5 @@ export default function App() {
       <nav className="scene-nav" aria-label="Navegación entre escenas">{lesson.scenes.map((scene, index) => { const sceneExercises = lesson.exercises.filter((item) => item.afterScene === scene.id); const done = sceneExercises.length > 0 && sceneExercises.every((item) => completed.has(item.id)); return <button key={scene.id} className={index === currentScene ? 'active' : ''} onClick={() => go(index)}><span>{done ? '✓' : index + 1}</span>{scene.title}</button>; })}</nav>
       {exercises.map((exercise) => <ExercisePanel key={exercise.id} exercise={exercise} label={exercise.type === 'authorization' ? 'Autorización' : exercise.type === 'prompt-copy' ? 'Elige y prueba' : undefined} onComplete={() => complete(exercise.id)}/>)}<p className="subtitle">{lesson.scenes[currentScene]?.narration}</p>
       {finalExercise && <div className="final-assessment" ref={finalAssessment}><ExercisePanel exercise={finalExercise} label="Evaluación final" onComplete={() => complete(finalExercise.id)}/>{completed.has(finalExercise.id) && <p className="assessment-complete">✓ Evaluación completada</p>}</div>}
-      {activeSession?.videoHref && <section className="video-export"><span className="eyebrow">Versión audiovisual</span><h2>Ver la lección completa</h2><video controls preload="metadata" src={`./${activeSession.videoHref}`}>Tu navegador no puede reproducir este video.</video></section>}
     </main></>;
 }

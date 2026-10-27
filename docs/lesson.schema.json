@@ -28,6 +28,7 @@
         {"oneOf": [
           {"properties": {"type": {"const": "concept"}, "body": {"type": "string"}, "bullets": {"type": "array", "items": {"type": "string"}}}, "required": ["body"]},
           {"properties": {"type": {"const": "code"}, "code": {"type": "string"}, "language": {"type": "string"}, "reveal": {"type": "array", "items": {"type": "number"}}, "highlights": {"type": "array", "items": {"type": "integer", "minimum": 1}}}, "required": ["code"]},
+          {"properties": {"type": {"const": "visual"}, "visual": {"enum": ["timeline", "os-download", "editor-setup", "app-preview", "prompt-flow", "choices"]}, "items": {"type": "array", "items": {"type": "object", "required": ["icon", "label"]}}, "steps": {"type": "array", "items": {"type": "string"}}}, "required": ["visual"]},
           {"properties": {"type": {"const": "diagram"}, "nodes": {"type": "array", "items": {"type": "object", "required": ["id", "label"]}}, "edges": {"type": "array", "items": {"type": "array", "prefixItems": [{"type": "string"}, {"type": "string"}], "minItems": 2, "maxItems": 2}}}, "required": ["nodes", "edges"]},
           {"properties": {"type": {"const": "terminal"}, "command": {"type": "string"}, "output": {"type": "string"}}, "required": ["command", "output"]}
         ]}

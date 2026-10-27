@@ -28,6 +28,8 @@ header,main { width:min(1180px,calc(100% - 36px)); margin:auto; }
 .site-logo { display:flex; align-items:center; min-height:72px; padding:7px 12px; border:1px solid var(--border); border-radius:12px; background:var(--panel); }
 .site-logo img { display:block; width:170px; height:auto; }
 .lesson-heading { min-width:0; padding-left:24px; border-left:1px solid var(--border); }
+.app-header h1 span { display:block; }
+.app-header .course-kicker { color:var(--accent-soft); font-size:.42em; font-weight:600; letter-spacing:.1em; text-transform:uppercase; margin-bottom:8px; }
 .app-header h1 { margin:6px 0 0; font-size:clamp(30px,4vw,50px); font-weight:500; line-height:1.02; letter-spacing:-.035em; }
 .brand,.eyebrow { color:var(--accent-soft); letter-spacing:.1em; text-transform:uppercase; font-size:12px; font-weight:600; }
 .session-controls { display:grid; gap:10px; min-width:260px; }
@@ -67,8 +69,5 @@ select:focus-visible,button:focus-visible,textarea:focus-visible { outline:2px s
 .final-assessment .exercise { border-color:#5a4a43; box-shadow:0 24px 64px rgba(0,0,0,.28); }
 .assessment-complete { color:#a8c49a; font-weight:600; text-align:center; }
 .subtitle { color:var(--muted); text-align:center; min-height:52px; font-size:16px; line-height:1.65; max-width:900px; margin:22px auto; }
-.video-export { margin:52px 0 84px; padding:30px; border:1px solid var(--border); border-radius:16px; background:var(--panel); }
-.video-export h2 { margin:10px 0 22px; font-size:clamp(24px,3vw,32px); font-weight:500; }
-.video-export video { display:block; width:100%; border-radius:12px; background:#000; }
 @media(max-width:850px){.app-header{grid-template-columns:1fr auto}.site-logo{grid-column:1/-1;width:max-content}.lesson-heading{padding-left:0;border-left:0}}
 @media(max-width:650px){.app-header{display:flex;align-items:stretch;gap:18px;flex-direction:column}.site-logo{width:100%;justify-content:center}.session-controls,.lesson-picker{width:100%}.exercise{padding:22px}.scene-nav{grid-template-columns:1fr}.exercise textarea{font-size:14px}}

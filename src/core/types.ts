@@ -1,4 +1,4 @@
-export type SceneType = 'concept' | 'code' | 'diagram' | 'terminal';
+export type SceneType = 'concept' | 'code' | 'diagram' | 'terminal' | 'visual';
 
 export interface BaseScene {
   id: string;
@@ -39,7 +39,22 @@ export interface TerminalScene extends BaseScene {
   output: string;
 }
 
-export type LessonScene = ConceptScene | CodeScene | DiagramScene | TerminalScene;
+export interface VisualItem {
+  icon: string;
+  label: string;
+  detail?: string;
+}
+
+export type VisualKind = 'timeline' | 'os-download' | 'editor-setup' | 'app-preview' | 'prompt-flow' | 'choices';
+
+export interface VisualScene extends BaseScene {
+  type: 'visual';
+  visual: VisualKind;
+  items?: VisualItem[];
+  steps?: string[];
+}
+
+export type LessonScene = ConceptScene | CodeScene | DiagramScene | TerminalScene | VisualScene;
 
 interface ExerciseBase {
   id: string;
@@ -88,6 +103,7 @@ export interface LessonDefinition {
   schemaVersion: 1;
   slug: string;
   title: string;
+  courseTitle?: string;
   language: string;
   objectives: string[];
   prerequisites: string[];
