@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Player} from '@remotion/player';
+import {Player, type PlayerRef} from '@remotion/player';
 import type {ProducedLesson} from '../core/types';
 import {ExercisePanel} from './components/ExercisePanel';
 import {FPS, LessonComposition, sceneFrames} from './components/LessonComposition';
@@ -15,6 +15,8 @@ export default function App() {
   const [error, setError] = useState('');
   const [autoPlay, setAutoPlay] = useState(false);
   const stepTop = useRef<HTMLDivElement>(null);
+  const player = useRef<PlayerRef>(null);
+  const questionsRef = useRef<HTMLDivElement>(null);
   const loadSession = (session: CourseSession) => {
     setError('');
     return fetch(`./${session.href}`).then((item) => item.json()).then((value: ProducedLesson) => {
@@ -27,6 +29,13 @@ export default function App() {
     if (!lesson) return;
     setCompleted(new Set(lesson.exercises.filter((item) => localStorage.getItem(`autotorial:${lesson.slug}:${item.id}`) === 'complete').map((item) => item.id)));
   }, [lesson]);
+  useEffect(() => {
+    const current = player.current;
+    if (!current) return;
+    const showQuestion = () => questionsRef.current?.scrollIntoView({behavior: 'smooth', block: 'start'});
+    current.addEventListener('ended', showQuestion);
+    return () => current.removeEventListener('ended', showQuestion);
+  }, [lesson, currentScene]);
   if (error) return <main><h1>No se pudo cargar el curso</h1><pre>{error}</pre></main>;
   if (!course || !lesson) return <main><p>Cargando la lección…</p></main>;
   const scene = lesson.scenes[currentScene];
@@ -61,11 +70,11 @@ export default function App() {
     </div>
   </header>
     <main>
-      <nav className="scene-nav" aria-label="Pasos de la lección">{lesson.scenes.map((item, index) => <button key={item.id} className={index === currentScene ? 'active' : ''} aria-current={index === currentScene ? 'step' : undefined} title={item.title} aria-label={`Paso ${index + 1}: ${item.title}`} onClick={() => go(index)}>{stepDone(item.id) ? '✓' : index + 1}</button>)}</nav>
-      <div ref={stepTop} className="step-head"><span className="eyebrow">Paso {currentScene + 1} de {lesson.scenes.length}</span><h2>{scene.title}</h2></div>
-      <div className="player-shell"><Player key={`${lesson.slug}:${scene.id}`} component={LessonComposition} inputProps={{lesson: stepLesson}} durationInFrames={sceneFrames(scene)} compositionWidth={1280} compositionHeight={720} fps={FPS} controls autoPlay={autoPlay} style={{width: '100%', aspectRatio: '16 / 9'}}/></div>
+      <nav className="scene-nav" aria-label="Partes de la lección">{lesson.scenes.map((item, index) => <button key={item.id} className={index === currentScene ? 'active' : ''} aria-current={index === currentScene ? 'true' : undefined} title={item.title} aria-label={`Parte ${index + 1}: ${item.title}`} onClick={() => go(index)}>{stepDone(item.id) ? '✓' : index + 1}</button>)}</nav>
+      <div ref={stepTop} className="step-head"><span className="eyebrow">Parte {currentScene + 1} de {lesson.scenes.length}</span></div>
+      <div className="player-shell"><Player ref={player} key={`${lesson.slug}:${scene.id}`} component={LessonComposition} inputProps={{lesson: stepLesson}} durationInFrames={sceneFrames(scene)} compositionWidth={1280} compositionHeight={720} fps={FPS} controls autoPlay={autoPlay} style={{width: '100%', aspectRatio: '16 / 9'}}/></div>
       <p className="subtitle">{scene.narration}</p>
-      {stepExercises.map((exercise) => <ExercisePanel key={exercise.id} exercise={exercise} label={exercise.type === 'authorization' ? 'Autorización' : exercise.type === 'prompt-copy' ? 'Elige y prueba' : 'Comprueba lo aprendido'} onComplete={() => complete(exercise.id)}/>)}
+      <div ref={questionsRef} className="step-questions">{stepExercises.map((exercise) => <ExercisePanel key={exercise.id} exercise={exercise} label={exercise.type === 'authorization' ? 'Autorización' : exercise.type === 'prompt-copy' ? 'Elige y prueba' : 'Comprueba lo aprendido'} onComplete={() => complete(exercise.id)}/>)}</div>
       <div className="step-actions">
         <button className="secondary" disabled={currentScene === 0} onClick={() => go(currentScene - 1)}>← Anterior</button>
         {isLast ? <span className={canContinue ? 'assessment-complete' : 'step-hint'}>{canContinue ? '✓ Lección completada' : 'Responde la pregunta para terminar'}</span>
