@@ -39,6 +39,15 @@ export default function App() {
     setCompleted(new Set(lesson.exercises.filter((item) => localStorage.getItem(`autotorial:${lesson.slug}:${item.id}`) === 'complete').map((item) => item.id)));
   }, [lesson]);
   useEffect(() => {
+    const bar = document.querySelector('.site-bar');
+    if (!bar) return;
+    const publish = () => document.documentElement.style.setProperty('--bar-h', `${bar.getBoundingClientRect().height}px`);
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(bar);
+    return () => observer.disconnect();
+  }, [lesson]);
+  useEffect(() => {
     const current = player.current;
     if (!current) return;
     const showQuestion = () => questionsRef.current?.scrollIntoView({behavior: 'smooth', block: 'start'});

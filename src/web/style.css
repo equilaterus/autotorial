@@ -16,6 +16,8 @@
   --code-ink:#dfe9f4;
   --danger:#ff9a94;
   --ok:#8fd19e;
+  --bar-h:65px; /* sticky bar height; App.tsx replaces it with the measured value */
+  --scroll-gap:calc(var(--bar-h) + 16px);
   --display:"Share Tech","Space Grotesk",ui-sans-serif,system-ui,sans-serif;
 }
 * { box-sizing:border-box; }
@@ -61,7 +63,7 @@ select:focus-visible,button:focus-visible,textarea:focus-visible,.site-nav a:foc
 .scene-nav button.active,.choices button.selected { color:var(--ink); border-color:var(--accent); background:#2a2230; }
 .scene-nav button.done:hover { border-color:#7ad9a0; }
 .scene-nav button.active span,.choices button.selected span { color:#1a0d08; background:var(--accent); }
-.exercise { scroll-margin-top:16px; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:30px; margin:30px 0; box-shadow:0 12px 36px rgba(2,8,20,.35); }
+.exercise { scroll-margin-top:var(--scroll-gap); background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:30px; margin:30px 0; box-shadow:0 12px 36px rgba(2,8,20,.35); }
 .exercise h2 { font-size:clamp(26px,3vw,34px); font-weight:400; line-height:1.2; letter-spacing:.01em; margin:10px 0 20px; }
 .exercise textarea { display:block; width:100%; min-height:230px; resize:vertical; color:var(--code-ink); background:var(--code); border:1px solid #2c5282; border-radius:12px; padding:20px 22px; font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace; font-size:15px; line-height:1.6; margin:16px 0 20px; box-shadow:inset 0 1px 0 rgba(255,255,255,.025); }
 .exercise > button,.copy-button { background:var(--accent-gradient); color:#fff; border:0; border-radius:999px; padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer; transition:background .15s ease,border-color .15s ease; }
@@ -75,8 +77,8 @@ select:focus-visible,button:focus-visible,textarea:focus-visible,.site-nav a:foc
 .consent input { width:20px; height:20px; margin:1px 0 0; accent-color:var(--accent); flex:0 0 auto; }
 .choices { display:grid; gap:10px; }
 .pass { color:var(--ok); }.fail { color:var(--danger); }.test-results { list-style:none; padding:0; font-size:14px; line-height:1.7; }
-.step-head { scroll-margin-top:84px; margin:6px 0 12px; }
-.step-questions { scroll-margin-top:16px; }
+.step-head { scroll-margin-top:var(--scroll-gap); margin:6px 0 12px; }
+.step-questions { scroll-margin-top:var(--scroll-gap); }
 .step-actions { display:flex; gap:14px; align-items:center; justify-content:flex-end; flex-wrap:wrap; margin:30px 0 70px; }
 .step-actions .secondary { margin-right:auto; color:var(--ink); background:transparent; border:1px solid var(--border); border-radius:999px; padding:11px 20px; cursor:pointer; }
 .step-actions .secondary:disabled { opacity:.3; cursor:not-allowed; }
@@ -88,7 +90,7 @@ select:focus-visible,button:focus-visible,textarea:focus-visible,.site-nav a:foc
 .group-title { margin:48px 0 -10px; font-size:clamp(26px,3vw,36px); font-weight:500; letter-spacing:-.02em; }
 .subtitle { color:#d3e0ee; text-align:center; font-size:19px; line-height:1.7; max-width:860px; margin:26px auto; }
 @media(max-width:760px){.site-bar-end{display:none}.site-nav{gap:20px;margin:0 0 0 auto}.lesson-head{flex-direction:column;align-items:stretch;padding-top:26px}.session-controls{min-width:0}}
-@media(max-width:560px){.site-bar-inner{gap:16px}.site-logo img{height:38px}.site-nav{gap:16px}.site-nav a{font-size:16px;letter-spacing:.1em}.site-nav a.extra{display:none}.exercise{padding:22px}.exercise textarea{font-size:14px}.subtitle{font-size:17px}}
+@media(max-width:560px){:root{--bar-h:57px}.site-bar-inner{gap:16px}.site-logo img{height:38px}.site-nav{gap:16px}.site-nav a{font-size:16px;letter-spacing:.1em}.site-nav a.extra{display:none}.exercise{padding:22px}.exercise textarea{font-size:14px}.subtitle{font-size:17px}}
 .checkpoint { display:grid; gap:14px; }
 .checkpoint h2 { margin:0; }
 .check-toggle { display:flex; align-items:center; gap:16px; width:100%; text-align:left; padding:18px 20px; color:var(--ink); background:var(--panel-raised); border:1px solid var(--border); border-radius:14px; cursor:pointer; font:400 22px/1.3 var(--display); letter-spacing:.01em; }
