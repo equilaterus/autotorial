@@ -1,8 +1,9 @@
-import {access, mkdir, readdir, readFile, writeFile} from 'node:fs/promises';
+import {access, cp, mkdir, readdir, readFile, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {contentHash, parseLesson, validateLesson} from './parser';
 import {runExerciseInNode} from './executor';
 import type {ProducedLesson} from './types';
+import {AUDIO_LEAD_IN} from './timing';
 import {generateNarration, type VoiceOptions} from '../voice';
 
 export const outputRoot = (hostRoot: string) => path.join(hostRoot, 'bin', 'autotorial');
@@ -59,15 +60,16 @@ export async function produceSession(hostRoot: string, slug: string, voice: Voic
   const publicDir = path.join(root, 'public');
   const generatedDir = path.join(root, 'generated');
   await mkdir(generatedDir, {recursive: true});
+  try { await cp(path.join(hostRoot, 'lessons', slug, 'assets'), path.join(publicDir, 'lesson-assets', slug), {recursive: true}); } catch { /* the lesson has no assets */ }
   const narration = await generateNarration(lesson.scenes, publicDir, voice);
   const durationByScene = new Map(narration.segments.map((segment) => [segment.sceneId, segment.duration]));
   const produced: ProducedLesson = {
     ...lesson,
     producedAt: new Date().toISOString(),
     sourceHash: contentHash(source),
-    scenes: lesson.scenes.map((scene) => ({...scene, duration: scene.duration ?? Math.max(3, (durationByScene.get(scene.id) ?? 1) + 0.6)})),
+    scenes: lesson.scenes.map((scene) => ({...scene, duration: scene.duration ?? Math.max(3, (durationByScene.get(scene.id) ?? 1) + AUDIO_LEAD_IN + 0.6)})),
     audio: narration.segments,
-    totalDuration: lesson.scenes.reduce((total, scene) => total + (scene.duration ?? Math.max(3, (durationByScene.get(scene.id) ?? 1) + 0.6)), 0),
+    totalDuration: lesson.scenes.reduce((total, scene) => total + (scene.duration ?? Math.max(3, (durationByScene.get(scene.id) ?? 1) + AUDIO_LEAD_IN + 0.6)), 0),
   };
   await writeFile(path.join(generatedDir, `${slug}.json`), JSON.stringify(produced, null, 2));
   await writeCourseIndex(hostRoot);

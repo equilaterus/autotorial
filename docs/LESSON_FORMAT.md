@@ -28,6 +28,8 @@ explanation: En macOS se arrastra la aplicación a Aplicaciones.
 
 Each `###` heading is one scene and, in the player, one screen. The title loses its leading number, plain prose becomes `narration`, the `scene` block holds the remaining scene fields (`type` defaults to `concept`) and every `exercise` block is an exercise of that scene (`afterScene` is implied). Anything after the next `##` heading is free author notes. Nothing is defined twice.
 
+Images live in `lessons/<slug>/assets/` and are copied to the site when the lesson is produced. Reference them by file name: a visual item takes `image`, and `cards` (`{label, detail, image}`) feeds the catalog shown by `app-preview` and `frontend`.
+
 The older layout still works: one fenced `autotorial` JSON block with `scenes` and `exercises`, as below.
 
 ````markdown

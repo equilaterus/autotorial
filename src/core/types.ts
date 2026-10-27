@@ -44,6 +44,8 @@ export interface VisualItem {
   label: string;
   detail?: string;
   steps?: string[];
+  /** File inside lessons/<slug>/assets/. */
+  image?: string;
 }
 
 export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices';
@@ -52,6 +54,8 @@ export interface VisualScene extends BaseScene {
   type: 'visual';
   visual: VisualKind;
   items?: VisualItem[];
+  /** Titled images (label, detail, image) for the visuals that show a catalog. */
+  cards?: VisualItem[];
   steps?: string[];
 }
 

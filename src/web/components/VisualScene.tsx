@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
+import {AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {VisualItem, VisualScene as VisualSceneData} from '../../core/types';
 
 const c = {bg: '#141413', panel: '#242421', raised: '#2c2c28', text: '#f0eee6', muted: '#a8a79f', border: '#3a3a36', accent: '#d97757', soft: '#e8a78f', code: '#10100f', ok: '#a8c49a', blue: '#4a90d9'};
@@ -215,7 +215,7 @@ function BrowserPage({items, steps = []}: {items: VisualItem[]; steps?: string[]
 const Tag = ({children}: {children: React.ReactNode}) => <span style={{display: 'inline-block', padding: '6px 16px', borderRadius: 999, background: c.accent, color: '#201713', fontSize: 24, fontWeight: 700, letterSpacing: 1}}>{children}</span>;
 
 /** Frontend: a mock app in a browser, with each kind of element named on the right. */
-function Frontend({items}: {items: VisualItem[]}) {
+function Frontend({items, cards = []}: {items: VisualItem[]; cards?: VisualItem[]}) {
   const {show} = useStage();
   return <div style={{display: 'grid', gridTemplateColumns: '1.45fr 1fr', gap: 36, alignItems: 'center'}}>
     <Window title="Navegador · localhost:3000">
@@ -228,7 +228,7 @@ function Frontend({items}: {items: VisualItem[]}) {
           {['＋ Agregar', '♥ Favoritos', 'Cambiar usuario'].map((label, i) => <span key={label} style={{padding: '10px 18px', borderRadius: 8, background: c.blue, fontSize: 22, outline: i === 0 ? `3px solid ${c.accent}` : 'none'}}>{label}</span>)}
         </div>
         <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10}}>
-          {['Commander Keen 4', 'Another World', 'Prince of Persia', 'Super Mario World'].map((name) => <div key={name} style={{borderRadius: 8, overflow: 'hidden', background: '#1b3349'}}><Cover name={name} height={70}/><div style={{padding: '4px 8px', fontSize: 15}}>{name}</div></div>)}
+          {cards.slice(0, 4).map((card) => <div key={card.label} style={{borderRadius: 8, overflow: 'hidden', background: '#1b3349'}}><Cover item={card} height={120}/><div style={{padding: '4px 8px', fontSize: 15}}>{card.label}</div></div>)}
         </div>
         <div style={{padding: '12px 16px', borderRadius: 10, background: '#1b3349', display: 'flex', gap: 12, alignItems: 'center', outline: `3px solid ${c.accent}`, fontSize: 21}}>
           <span style={{color: '#9fb7cc'}}>Nuevo videojuego</span><span style={{flex: 1, padding: '6px 10px', background: '#10202f', borderRadius: 6}}>Título…</span>
@@ -273,9 +273,9 @@ function Database({items, steps = []}: {items: VisualItem[]; steps?: string[]}) 
   return <div style={{display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'center'}}>
     <div style={{borderRadius: 16, overflow: 'hidden', border: `2px solid ${c.accent}`, background: c.panel}}>
       <div style={{display: 'flex', gap: 14, alignItems: 'center', padding: '16px 22px', background: c.raised}}><span style={{fontSize: 44}}>🗄️</span><Tag>BASE DE DATOS</Tag><span style={{fontSize: 24, color: c.muted}}>SQLite · tabla «juegos»</span></div>
-      <div style={{display: 'grid', gridTemplateColumns: '88px 2fr 1fr 1fr', gap: 16, padding: '12px 22px', fontSize: 22, color: c.muted, letterSpacing: 1}}><span/><span>TÍTULO</span><span>AÑO</span><span>FAVORITO</span></div>
-      {items.map((item, i) => <div key={item.label} style={{...show(0.08 + i * 0.1), display: 'grid', gridTemplateColumns: '88px 2fr 1fr 1fr', alignItems: 'center', gap: 16, padding: '10px 22px', fontSize: 28, borderTop: `1px solid ${c.border}`, background: i === items.length - 1 ? '#28211e' : 'transparent'}}>
-        <span style={{borderRadius: 6, overflow: 'hidden'}}><Cover name={item.label} height={50}/></span><span>{item.label}</span><span style={{color: c.muted}}>{item.detail}</span><span style={{color: c.soft}}>{i % 2 ? '♥' : '♡'}</span>
+      <div style={{display: 'grid', gridTemplateColumns: '64px 2fr 1fr 1fr', gap: 16, padding: '12px 22px', fontSize: 22, color: c.muted, letterSpacing: 1}}><span/><span>TÍTULO</span><span>AÑO</span><span>FAVORITO</span></div>
+      {items.map((item, i) => <div key={item.label} style={{...show(0.08 + i * 0.1), display: 'grid', gridTemplateColumns: '64px 2fr 1fr 1fr', alignItems: 'center', gap: 16, padding: '8px 22px', fontSize: 28, borderTop: `1px solid ${c.border}`, background: i === items.length - 1 ? '#28211e' : 'transparent'}}>
+        <span style={{borderRadius: 6, overflow: 'hidden'}}><Cover item={item} height={64}/></span><span>{item.label}</span><span style={{color: c.muted}}>{item.detail}</span><span style={{color: c.soft}}>{i % 2 ? '♥' : '♡'}</span>
       </div>)}
     </div>
     <div style={{display: 'grid', gap: 18}}>
@@ -324,54 +324,17 @@ function AgentWork({steps = []}: {steps?: string[]}) {
   </div>;
 }
 
-/** Stylized, original cover art for the example games (not the official box art). */
-function Cover({name, height = 92, radius = 0}: {name: string; height?: number; radius?: number}) {
-  const stars = [[12, 14], [40, 8], [128, 12], [146, 30], [24, 40], [110, 26]].map(([x, y]) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.6" fill="#fff" opacity=".8"/>);
-  const art: Record<string, React.ReactNode> = {
-    'Commander Keen 4': <>
-      <defs><linearGradient id="keen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#5b2a63"/><stop offset="1" stopColor="#e0703c"/></linearGradient></defs>
-      <rect width="160" height="100" fill="url(#keen)"/>{stars}<circle cx="128" cy="26" r="14" fill="#f5d9a0"/>
-      <path d="M0 80 Q40 58 80 78 T160 70 V100 H0z" fill="#8a2f2a"/><path d="M0 90 Q50 74 100 90 T160 86 V100 H0z" fill="#5e1d1d"/>
-      <rect x="66" y="52" width="26" height="30" rx="5" fill="#f2f2f2"/><circle cx="79" cy="46" r="17" fill="#f7d33a"/><ellipse cx="82" cy="48" rx="10" ry="7" fill="#1c1c24"/><rect x="62" y="30" width="34" height="6" rx="3" fill="#d8392b"/>
-    </>,
-    'Another World': <>
-      <defs><linearGradient id="aw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#0f2a4d"/><stop offset="1" stopColor="#2a8c9a"/></linearGradient></defs>
-      <rect width="160" height="100" fill="url(#aw)"/><circle cx="118" cy="30" r="22" fill="#f08a3c"/><circle cx="96" cy="22" r="8" fill="#f7c77a" opacity=".9"/>
-      <path d="M0 74 Q30 62 60 74 T120 72 T160 70 V100 H0z" fill="#0b1c2e"/><path d="M0 88 Q40 80 80 88 T160 86 V100 H0z" fill="#071320"/>
-      <path d="M44 74 l6 -22 l6 22z M52 52 m-4 -8 a4 4 0 1 1 8 0 a4 4 0 1 1 -8 0" fill="#e9eef2"/><path d="M104 76 q8 -30 14 0z" fill="#f08a3c"/>
-    </>,
-    'Prince of Persia': <>
-      <defs><linearGradient id="pp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2b1d4a"/><stop offset="1" stopColor="#e8a24f"/></linearGradient></defs>
-      <rect width="160" height="100" fill="url(#pp)"/><path d="M122 14 a14 14 0 1 0 12 22 a11 11 0 1 1 -12 -22z" fill="#f5e6b8"/>
-      <path d="M20 100 V46 Q20 14 52 14 Q84 14 84 46 V100 H70 V48 Q70 26 52 26 Q34 26 34 48 V100z" fill="#2a1a12"/>
-      <rect x="0" y="86" width="160" height="14" fill="#4a2f1f"/><rect x="100" y="52" width="14" height="36" rx="5" fill="#f4f0e6"/><circle cx="107" cy="46" r="8" fill="#e0b48a"/><rect x="98" y="38" width="18" height="6" rx="3" fill="#c0392b"/><rect x="116" y="60" width="22" height="3" fill="#d8dde2"/>
-    </>,
-    'Prince of Persia 2': <>
-      <defs><linearGradient id="p2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1a1040"/><stop offset="1" stopColor="#7a2a6e"/></linearGradient></defs>
-      <rect width="160" height="100" fill="url(#p2)"/>{stars}
-      <path d="M80 18 C100 40 108 56 96 72 C90 80 70 80 64 72 C52 56 62 40 80 18z" fill="#f08a3c"/><path d="M80 40 C90 54 92 62 86 70 C82 74 76 74 74 70 C68 62 72 54 80 40z" fill="#f7d33a"/>
-      <path d="M0 100 V70 Q0 56 14 56 H26 V100z M134 100 V56 H146 Q160 56 160 70 V100z" fill="#12091f"/><rect x="0" y="90" width="160" height="10" fill="#241238"/>
-    </>,
-    'Super Mario World': <>
-      <rect width="160" height="100" fill="#5fb7f2"/><ellipse cx="36" cy="22" rx="20" ry="8" fill="#fff"/><ellipse cx="52" cy="26" rx="16" ry="7" fill="#fff"/><ellipse cx="124" cy="16" rx="18" ry="7" fill="#fff"/>
-      <path d="M0 100 V70 Q30 40 62 70 Q90 50 120 74 Q146 58 160 70 V100z" fill="#3fa34d"/><rect x="0" y="86" width="160" height="14" fill="#7a4a2b"/>
-      <rect x="64" y="38" width="26" height="26" rx="3" fill="#f7c331" stroke="#a8701a" strokeWidth="2"/><text x="77" y="58" textAnchor="middle" fontSize="20" fontWeight="700" fill="#a8701a">?</text>
-      <circle cx="120" cy="66" r="9" fill="#e23b2e"/><rect x="113" y="73" width="14" height="12" rx="3" fill="#2e4fa3"/>
-    </>,
-    'Simon the Sorcerer 2': <>
-      <defs><linearGradient id="ss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2e1a5e"/><stop offset="1" stopColor="#6b3fa0"/></linearGradient></defs>
-      <rect width="160" height="100" fill="url(#ss)"/>{stars}
-      <path d="M80 6 L112 74 H48z" fill="#5a2d9c" stroke="#f7d33a" strokeWidth="2"/><ellipse cx="80" cy="76" rx="44" ry="9" fill="#4a2380" stroke="#f7d33a" strokeWidth="2"/>
-      <path d="M80 30 l3 7 l8 1 l-6 5 l2 8 l-7 -4 l-7 4 l2 -8 l-6 -5 l8 -1z" fill="#f7d33a"/><circle cx="96" cy="58" r="3" fill="#f7d33a"/><circle cx="66" cy="62" r="2.4" fill="#f7d33a"/>
-      <path d="M52 92 Q80 84 108 92 V100 H52z" fill="#1d0f3d"/>
-    </>,
-  };
-  return <svg viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" style={{display: 'block', width: '100%', height, borderRadius: radius}} role="img" aria-label={`Portada de ${name}`}>{art[name] ?? <rect width="160" height="100" fill="#2a3a4a"/>}</svg>;
+const CoverContext = React.createContext('');
+
+/** A catalog image shipped with the lesson (lessons/<slug>/assets/). */
+function Cover({item, height, ratio}: {item: VisualItem; height?: number; ratio?: string}) {
+  const slug = React.useContext(CoverContext);
+  return item.image
+    ? <Img src={staticFile(`lesson-assets/${slug}/${item.image}`)} alt={`Portada de ${item.label}`} style={{display: 'block', width: '100%', height, aspectRatio: ratio, objectFit: 'cover', objectPosition: 'top'}}/>
+    : <div style={{width: '100%', height, aspectRatio: ratio, background: '#2a3a4a'}}/>;
 }
 
-const GAMES = [['Commander Keen 4', 1991, '#3a6ea5'], ['Another World', 1991, '#8a4f7d'], ['Prince of Persia', 1989, '#b5793a'], ['Prince of Persia 2', 1993, '#7a5ca8'], ['Super Mario World', 1990, '#4f9d5d'], ['Simon the Sorcerer 2', 1995, '#a8503a']] as const;
-
-function AppPreview({items, checks = []}: {items: VisualItem[]; checks?: string[]}) {
+function AppPreview({items, cards = [], checks = []}: {items: VisualItem[]; cards?: VisualItem[]; checks?: string[]}) {
   const {p, show} = useStage();
   const admin = p > 0.55;
   const user = items[admin ? 1 : 0];
@@ -384,10 +347,10 @@ function AppPreview({items, checks = []}: {items: VisualItem[]; checks?: string[
           <span style={{flex: 1, padding: '8px 14px', borderRadius: 6, background: '#1b3349', color: '#7f9bb5', fontSize: 18}}>🔍 Buscar videojuegos…</span>
           <span style={{padding: '8px 14px', borderRadius: 6, background: c.blue, fontSize: 18}}>{user?.icon} {user?.label} · Cambiar usuario</span>
         </div>
-        <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14}}>
-          {GAMES.map(([name, year], i) => <div key={name} style={{...show(0.04 + i * 0.05), background: '#1b3349', borderRadius: 8, overflow: 'hidden'}}>
-            <Cover name={name} height={92}/>
-            <div style={{padding: '8px 10px'}}><div style={{fontSize: 18}}>{name}</div><div style={{fontSize: 15, color: '#7f9bb5'}}>{year} · {i % 2 ? '♥ Favorito' : '♡'}</div></div>
+        <div style={{display: 'grid', gridTemplateColumns: `repeat(${Math.max(1, cards.length)}, 1fr)`, gap: 12}}>
+          {cards.map((card, i) => <div key={card.label} style={{...show(0.04 + i * 0.05), background: '#1b3349', borderRadius: 8, overflow: 'hidden'}}>
+            <Cover item={card} ratio="3 / 4"/>
+            <div style={{padding: '8px 10px'}}><div style={{fontSize: 16, lineHeight: 1.2, minHeight: 38}}>{card.label}</div><div style={{fontSize: 15, color: '#7f9bb5'}}>{card.detail} · {i % 2 ? '♥' : '♡'}</div></div>
           </div>)}
         </div>
         {admin && <div style={{...show(0.55), marginTop: 14, display: 'flex', gap: 10, fontSize: 17}}>{['＋ Agregar', '✎ Editar', '🗑 Eliminar'].map((label) => <span key={label} style={{padding: '6px 12px', borderRadius: 6, background: '#2c4d6b'}}>{label}</span>)}</div>}
@@ -435,7 +398,7 @@ function Choices({items}: {items: VisualItem[]}) {
   </div>;
 }
 
-export function VisualScene({scene}: {scene: VisualSceneData}) {
+export function VisualScene({scene, slug}: {scene: VisualSceneData; slug: string}) {
   const items = scene.items ?? [];
   const body = scene.visual === 'timeline' ? <Timeline items={items}/>
     : scene.visual === 'browser-download' ? <BrowserDownload items={items}/>
@@ -444,13 +407,13 @@ export function VisualScene({scene}: {scene: VisualSceneData}) {
     : scene.visual === 'open-folder' ? <OpenFolder items={items}/>
     : scene.visual === 'open-chat' ? <OpenChat items={items}/>
     : scene.visual === 'browser-page' ? <BrowserPage items={items} steps={scene.steps}/>
-    : scene.visual === 'frontend' ? <Frontend items={items}/>
+    : scene.visual === 'frontend' ? <Frontend items={items} cards={scene.cards}/>
     : scene.visual === 'backend' ? <Backend items={items} steps={scene.steps}/>
     : scene.visual === 'database' ? <Database items={items} steps={scene.steps}/>
     : scene.visual === 'docker' ? <Docker items={items} steps={scene.steps}/>
     : scene.visual === 'agent-work' ? <AgentWork steps={scene.steps}/>
-    : scene.visual === 'app-preview' ? <AppPreview items={items} checks={scene.steps}/>
+    : scene.visual === 'app-preview' ? <AppPreview items={items} cards={scene.cards} checks={scene.steps}/>
     : scene.visual === 'prompt-flow' ? <PromptFlow items={items}/>
     : <Choices items={items}/>;
-  return <AbsoluteFill style={{fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif', color: c.text, background: c.bg, padding: '46px 70px', justifyContent: 'center'}}><Title>{scene.title}</Title>{body}</AbsoluteFill>;
+  return <AbsoluteFill style={{fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif', color: c.text, background: c.bg, padding: '46px 70px', justifyContent: 'center'}}><Title>{scene.title}</Title><CoverContext.Provider value={slug}>{body}</CoverContext.Provider></AbsoluteFill>;
 }
