@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Player, type PlayerRef} from '@remotion/player';
 import type {ProducedLesson} from '../core/types';
 import {ExercisePanel} from './components/ExercisePanel';
@@ -36,9 +36,10 @@ export default function App() {
     if (!lesson) return;
     setCompleted(new Set(lesson.exercises.filter((item) => localStorage.getItem(`autotorial:${lesson.slug}:${item.id}`) === 'complete').map((item) => item.id)));
   }, [lesson]);
-  const exercises = useMemo(() => lesson?.exercises.filter((item) => item.afterScene === lesson.scenes[currentScene]?.id) ?? [], [lesson, currentScene]);
   if (error) return <main><h1>No se pudo cargar el curso</h1><pre>{error}</pre></main>;
   if (!course || !lesson) return <main><p>Cargando la lección…</p></main>;
+  const actions = lesson.exercises.filter((item) => item.type === 'authorization' || item.type === 'prompt-copy');
+  const questions = lesson.exercises.filter((item) => item.type !== 'authorization' && item.type !== 'prompt-copy');
   const duration = lesson.scenes.reduce((total, scene) => total + sceneFrames(scene), 0);
   const sessionIndex = course.sessions.findIndex((session) => session.slug === lesson.slug);
   const goToSession = (index: number) => {
@@ -65,6 +66,8 @@ export default function App() {
   </header>
     <main><div className="player-shell"><Player key={lesson.slug} ref={player} component={LessonComposition} inputProps={{lesson}} durationInFrames={duration} compositionWidth={1280} compositionHeight={720} fps={FPS} controls style={{width: '100%', aspectRatio: '16 / 9'}}/></div>
       <nav className="scene-nav" aria-label="Navegación entre escenas">{lesson.scenes.map((scene, index) => { const sceneExercises = lesson.exercises.filter((item) => item.afterScene === scene.id); const done = sceneExercises.length > 0 && sceneExercises.every((item) => completed.has(item.id)); return <button key={scene.id} className={index === currentScene ? 'active' : ''} onClick={() => go(index)}><span>{done ? '✓' : index + 1}</span>{scene.title}</button>; })}</nav>
-      {exercises.map((exercise) => <ExercisePanel key={exercise.id} exercise={exercise} label={exercise.type === 'authorization' ? 'Autorización' : exercise.type === 'prompt-copy' ? 'Elige y prueba' : exercise.type === 'multiple-choice' ? 'Comprueba lo aprendido' : undefined} onComplete={() => complete(exercise.id)}/>)}<p className="subtitle">{lesson.scenes[currentScene]?.narration}</p>
+      <p className="subtitle">{lesson.scenes[currentScene]?.narration}</p>
+      {actions.length > 0 && <section className="exercise-group"><h2 className="group-title">Practica</h2>{actions.map((exercise) => <ExercisePanel key={exercise.id} exercise={exercise} label={exercise.type === 'authorization' ? 'Autorización' : 'Elige y prueba'} onComplete={() => complete(exercise.id)}/>)}</section>}
+      {questions.length > 0 && <section className="exercise-group"><h2 className="group-title">Comprueba lo aprendido</h2>{questions.map((exercise) => {const number = lesson.scenes.findIndex((scene) => scene.id === exercise.afterScene) + 1; return <ExercisePanel key={exercise.id} exercise={exercise} label={`Bloque ${number} · ${lesson.scenes[number - 1]?.title}`} onComplete={() => complete(exercise.id)}/>;})}</section>}
     </main></>;
 }
