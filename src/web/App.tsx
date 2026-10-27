@@ -39,15 +39,6 @@ export default function App() {
     setCompleted(new Set(lesson.exercises.filter((item) => localStorage.getItem(`autotorial:${lesson.slug}:${item.id}`) === 'complete').map((item) => item.id)));
   }, [lesson]);
   useEffect(() => {
-    const bar = document.querySelector('.site-bar');
-    if (!bar) return;
-    const publish = () => document.documentElement.style.setProperty('--bar-h', `${bar.getBoundingClientRect().height}px`);
-    publish();
-    const observer = new ResizeObserver(publish);
-    observer.observe(bar);
-    return () => observer.disconnect();
-  }, [lesson]);
-  useEffect(() => {
     const current = player.current;
     if (!current) return;
     let finished = false;
@@ -89,6 +80,7 @@ export default function App() {
     setCompleted((previous) => new Set(previous).add(id));
   };
   const stepDone = (id: string, index: number) => { const own = lesson.exercises.filter((item) => item.afterScene === id && isGate(item)); return own.length > 0 ? own.every((item) => completed.has(item.id)) : index < reached; };
+  const doneCount = lesson.scenes.filter((item, index) => stepDone(item.id, index)).length;
   const resetProgress = () => {
     Object.keys(localStorage).filter((key) => key.startsWith(`autotorial:${lesson.slug}:`)).forEach((key) => localStorage.removeItem(key));
     setCompleted(new Set());
@@ -110,8 +102,12 @@ export default function App() {
   </div></header>
     <main>
       <p className="mobile-title">{titleLines.join(' ')}</p>
-      <div ref={stepTop} className="step-head"><span className="eyebrow">Parte {currentScene + 1} de {lesson.scenes.length}</span></div>
-      <nav className="scene-nav" aria-label="Partes de la lección">{lesson.scenes.map((item, index) => <button key={item.id} className={`${index === currentScene ? 'active' : ''} ${stepDone(item.id, index) ? 'done' : ''}`} aria-current={index === currentScene ? 'true' : undefined} title={item.title} aria-label={`Parte ${index + 1}: ${item.title}`} onClick={() => go(index)}>{stepDone(item.id, index) ? '✓' : index + 1}</button>)}</nav>
+      <div className="lesson-layout">
+      <aside className="parts" aria-label="Partes de la lección">
+        <div className="parts-head"><span className="eyebrow">Parte {currentScene + 1} de {lesson.scenes.length}</span><div className="parts-progress" role="progressbar" aria-valuemin={0} aria-valuemax={lesson.scenes.length} aria-valuenow={doneCount} aria-label="Partes completadas"><i style={{width: `${(doneCount / lesson.scenes.length) * 100}%`}}/></div></div>
+        <ol>{lesson.scenes.map((item, index) => <li key={item.id}><button type="button" className={`part${index === currentScene ? ' active' : ''}${stepDone(item.id, index) ? ' done' : ''}`} aria-current={index === currentScene ? 'true' : undefined} onClick={() => go(index)}><span className="part-num">{stepDone(item.id, index) ? '✓' : index + 1}</span><span className="part-title">{item.title}</span></button></li>)}</ol>
+      </aside>
+      <div ref={stepTop} className="lesson-main">
       <div className="player-shell"><Player ref={player} key={`${lesson.slug}:${scene.id}`} component={LessonComposition} inputProps={{lesson: stepLesson}} durationInFrames={sceneFrames(scene)} compositionWidth={1280} compositionHeight={720} fps={FPS} controls autoPlay={autoPlay} style={{width: '100%', aspectRatio: '16 / 9'}}/></div>
       <p className="subtitle">{scene.narration}</p>
       <div ref={questionsRef} className="step-questions">{stepExercises.map((exercise) => <ExercisePanel key={`${exercise.id}:${resetCount}`} exercise={exercise} done={completed.has(exercise.id)} label={exercise.type === 'authorization' ? 'Autorización' : exercise.type === 'prompt-copy' ? 'Elige y prueba' : exercise.type === 'checkpoint' ? 'Tu turno' : 'Comprueba lo aprendido'} onComplete={() => complete(exercise.id)}/>)}</div>
@@ -121,6 +117,8 @@ export default function App() {
           : <>{!canContinue && <span className="step-hint">{pendingCheck ? 'Marca la casilla cuando lo hayas hecho para continuar' : 'Responde la pregunta para continuar'}</span>}<button className="primary" disabled={!canContinue} onClick={() => advance()}>Continuar →</button></>}
       </div>
       <div className="reset-row"><button type="button" className="reset-button" onClick={() => setConfirmReset(true)}>Reiniciar progreso</button></div>
+      </div>
+      </div>
     </main>
     {confirmReset && <div className="modal-backdrop" role="presentation" onClick={() => setConfirmReset(false)} onKeyDown={(event) => {if (event.key === 'Escape') setConfirmReset(false);}}>
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="reset-title" onClick={(event) => event.stopPropagation()}>
