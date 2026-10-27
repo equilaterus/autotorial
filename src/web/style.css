@@ -103,23 +103,11 @@ select:focus-visible,button:focus-visible,textarea:focus-visible { outline:2px s
 .danger-button { color:#fff; background:#c0392b; border:0; border-radius:999px; padding:10px 22px; font-size:17px; cursor:pointer; }
 .danger-button:hover { filter:brightness(1.12); }
 .site-footer { background:#141414; color:#fff; font-family:var(--display); }
-.site-footer-main,.site-footer-bottom { width:min(1180px,calc(100% - 36px)); margin:auto; }
-.site-footer-main { display:flex; align-items:flex-start; justify-content:space-between; gap:32px; padding:40px 0; }
-.site-footer-menu { display:grid; gap:14px; margin:0; padding:0; list-style:none; }
-.site-footer-menu a { color:#fff; text-decoration:none; font-size:17px; font-weight:700; letter-spacing:.12em; }
-.site-footer-menu a:hover { color:var(--accent); }
-.site-footer-brand { display:grid; gap:18px; justify-items:end; }
-.site-footer-logo img { display:block; width:210px; max-width:100%; height:auto; }
-.site-footer-social { display:flex; gap:16px; margin:0; padding:0; list-style:none; }
-.site-footer-social a { display:grid; place-items:center; width:36px; height:36px; background:#222; border-radius:4px; }
-.site-footer-social a:hover { background:#333; }
-.site-footer-social svg { width:18px; height:18px; fill:#fff; }
-.site-footer-bottom { border-top:1px solid #333; padding:28px 0 36px; text-align:center; width:100%; }
+.site-footer-bottom { padding:32px 18px 40px; text-align:center; }
 .site-footer-equilaterus { width:min(200px,70vw); height:auto; margin:0 auto 16px; display:block; }
 .site-footer-bottom p { max-width:40rem; margin:0 auto; font-size:17px; line-height:1.7; color:#e9eef5; }
 .site-footer-bottom p+p { margin-top:4px; }
 .site-footer-bottom a { color:#fff; }
 .cc-badge { display:inline-flex; align-items:center; justify-content:center; min-width:1.65rem; height:1.65rem; margin-right:.45rem; border:1px solid currentColor; border-radius:9999px; font-size:.78rem; font-weight:700; vertical-align:middle; }
-@media(max-width:620px){.site-footer-main{flex-direction:column;align-items:center}.site-footer-menu{justify-items:center}.site-footer-brand{justify-items:center}.site-footer-logo{display:none}}
 #root { min-height:100vh; display:flex; flex-direction:column; }
 .site-footer { margin-top:auto; }

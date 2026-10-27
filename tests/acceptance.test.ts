@@ -47,7 +47,7 @@ describe.skipIf(!hasEspeak)('Hello World host acceptance', () => {
     expect(publishedJavaScript).toContain('Comprueba lo aprendido');
     expect(publishedJavaScript).not.toContain('Versión audiovisual');
     expect(publishedJavaScript).toContain('Anterior');
-    expect(publishedJavaScript).toContain('Siguiente');
+    expect(publishedJavaScript).toContain('Lección siguiente');
     expect(publishedJavaScript).toContain('remotion_staticBase');
     const helloLesson = JSON.parse(await readFile(path.join(host, 'bin', 'autotorial', 'generated', 'session-0.json'), 'utf8'));
     const functionsLesson = JSON.parse(await readFile(path.join(host, 'bin', 'autotorial', 'generated', 'session-1.json'), 'utf8'));
