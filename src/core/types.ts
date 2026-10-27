@@ -43,7 +43,7 @@ export type LessonScene = ConceptScene | CodeScene | DiagramScene | TerminalScen
 
 interface ExerciseBase {
   id: string;
-  type: 'multiple-choice' | 'output-prediction' | 'code-completion';
+  type: 'multiple-choice' | 'output-prediction' | 'code-completion' | 'prompt-copy' | 'authorization';
   prompt: string;
   explanation: string;
   afterScene: string;
@@ -68,7 +68,21 @@ export interface CodeExercise extends ExerciseBase {
   tests: CodeTest[];
 }
 
-export type Exercise = ChoiceExercise | CodeExercise;
+export interface PromptCopyExercise extends ExerciseBase {
+  type: 'prompt-copy';
+  copyText: string;
+  buttonLabel?: string;
+}
+
+export interface AuthorizationExercise extends ExerciseBase {
+  type: 'authorization';
+  notice: string;
+  consentLabel: string;
+  copyText: string;
+  buttonLabel?: string;
+}
+
+export type Exercise = ChoiceExercise | CodeExercise | PromptCopyExercise | AuthorizationExercise;
 
 export interface LessonDefinition {
   schemaVersion: 1;

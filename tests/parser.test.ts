@@ -39,4 +39,20 @@ objectives: [Find errors]
     const {lesson} = await parseLesson(root, 'bad');
     expect(validateLesson(lesson).map((issue) => issue.path)).toEqual(expect.arrayContaining(['exercises[0].afterScene', 'exercises[0]']));
   });
+
+  it('validates copy prompts and explicit authorization data', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'autotorial-copy-'));
+    await mkdir(path.join(root, 'lessons', 'copy'), {recursive: true});
+    await writeFile(path.join(root, 'lessons', 'copy', 'INDEX.md'), `---
+title: Copy prompts
+language: es
+objectives: [Copiar un prompt]
+---
+\n\`\`\`autotorial
+{"scenes":[{"id":"intro","type":"concept","title":"Intro","body":"Body","narration":"Hola"}],"exercises":[{"id":"copy","type":"prompt-copy","prompt":"Copia","explanation":"Listo","afterScene":"intro","copyText":"Haz un cambio"},{"id":"allow","type":"authorization","prompt":"Autoriza","explanation":"Listo","afterScene":"intro","notice":"Puede instalar software","consentLabel":"Acepto","copyText":"Construye el proyecto"}]}
+\`\`\`
+`);
+    const {lesson} = await parseLesson(root, 'copy');
+    expect(validateLesson(lesson)).toEqual([]);
+  });
 });

@@ -21,7 +21,7 @@ prerequisites:
 
 Scene types are `concept`, `code`, `diagram`, and `terminal`. Every scene requires `id`, `type`, `title`, and Spanish or otherwise lesson-language `narration`. Type-specific fields are documented by the JSON schema in [`lesson.schema.json`](./lesson.schema.json).
 
-Exercise types are `multiple-choice`, `output-prediction`, and `code-completion`. Choice answers are zero-based indexes. Code tests are `{name, expression, expected}` records; the expression runs after the learner code in an isolated disposable browser frame.
+Exercise types are `multiple-choice`, `output-prediction`, `code-completion`, `prompt-copy`, and `authorization`. Choice answers are zero-based indexes. Code tests are `{name, expression, expected}` records; the expression runs after the learner code in an isolated disposable browser frame. A `prompt-copy` exercise requires `copyText` and can customize `buttonLabel`. An `authorization` exercise additionally requires `notice` and `consentLabel`; its copy button remains disabled until the learner explicitly accepts.
 
 ## Multiple sessions
 

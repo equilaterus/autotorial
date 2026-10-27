@@ -16,7 +16,10 @@ async function writeCourseIndex(hostRoot: string): Promise<void> {
   const sessions = [];
   for (const file of files) {
     const lesson = JSON.parse(await readFile(path.join(generatedDir, file), 'utf8')) as ProducedLesson;
-    sessions.push({slug: lesson.slug, title: lesson.title, language: lesson.language, objectives: lesson.objectives, href: `lessons/${file}`});
+    const videoFile = path.join(outputRoot(hostRoot), 'video', `${lesson.slug}.mp4`);
+    let videoHref: string | undefined;
+    try { await access(videoFile); videoHref = `video/${lesson.slug}.mp4`; } catch { /* optional export */ }
+    sessions.push({slug: lesson.slug, title: lesson.title, language: lesson.language, objectives: lesson.objectives, href: `lessons/${file}`, ...(videoHref ? {videoHref} : {})});
   }
   await mkdir(path.join(publicDir, 'lessons'), {recursive: true});
   for (const file of files) {

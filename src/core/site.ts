@@ -1,4 +1,5 @@
 import path from 'node:path';
+import {cp} from 'node:fs/promises';
 import {build, createServer, type ViteDevServer} from 'vite';
 import react from '@vitejs/plugin-react';
 import {outputRoot} from './production';
@@ -21,7 +22,10 @@ function config(frameworkRoot: string, hostRoot: string, base: string) {
 
 export async function buildSite(frameworkRoot: string, hostRoot: string, base = './'): Promise<string> {
   await build({...config(frameworkRoot, hostRoot, base), logLevel: 'warn'});
-  return path.join(outputRoot(hostRoot), 'site');
+  const root = outputRoot(hostRoot);
+  const site = path.join(root, 'site');
+  try { await cp(path.join(root, 'video'), path.join(site, 'video'), {recursive: true}); } catch { /* MP4 export is optional */ }
+  return site;
 }
 
 export async function previewSite(frameworkRoot: string, hostRoot: string, port = 4173, open = false): Promise<ViteDevServer> {

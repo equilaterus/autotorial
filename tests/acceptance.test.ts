@@ -1,5 +1,5 @@
 import {spawn, spawnSync} from 'node:child_process';
-import {appendFile, cp, mkdtemp, readFile, readdir, stat} from 'node:fs/promises';
+import {appendFile, cp, mkdir, mkdtemp, readFile, readdir, stat, writeFile} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -33,10 +33,14 @@ describe.skipIf(!hasEspeak)('Hello World host acceptance', () => {
     expect(run(['produce', 'session-1', '--host', host, '--voice', 'espeak'])).toContain('4 scenes, 2 exercises');
     expect(run(['exercise', 'session-0', 'write-message', '--host', host])).toContain('"passed": true');
     expect(run(['exercise', 'session-1', 'fix-multiplicar', '--host', host])).toContain('"passed": true');
+    await mkdir(path.join(host, 'bin', 'autotorial', 'video'), {recursive: true});
+    await writeFile(path.join(host, 'bin', 'autotorial', 'video', 'session-1.mp4'), 'test-video');
     expect(run(['publish', '--host', host])).toContain('publication gate passed');
     const course = JSON.parse(await readFile(path.join(host, 'bin', 'autotorial', 'site', 'course.json'), 'utf8'));
     expect(course.sessions.map((session: {slug: string}) => session.slug)).toEqual(['session-0', 'session-1']);
     expect((await stat(path.join(host, 'bin', 'autotorial', 'site', 'index.html'))).size).toBeGreaterThan(100);
+    expect((await stat(path.join(host, 'bin', 'autotorial', 'site', 'video', 'session-1.mp4'))).size).toBeGreaterThan(0);
+    expect(course.sessions.find((session: {slug: string}) => session.slug === 'session-1').videoHref).toBe('video/session-1.mp4');
     const assetsDir = path.join(host, 'bin', 'autotorial', 'site', 'assets');
     const scripts = (await readdir(assetsDir)).filter((file) => file.endsWith('.js'));
     const publishedJavaScript = (await Promise.all(scripts.map((file) => readFile(path.join(assetsDir, file), 'utf8')))).join('\n');

@@ -27,7 +27,7 @@ function Code({code, highlights = [], reveal = []}: {code: string; highlights?: 
 
 export function SceneCard({scene}: {scene: LessonScene}) {
   const frame = useCurrentFrame();
-  const enter = interpolate(frame, [0, 18], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+  const enter = interpolate(frame, [0, 18], [0.82, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   const common: React.CSSProperties = {fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif', color: palette.text, background: palette.bg, padding: 70, opacity: enter, transform: `translateY(${(1 - enter) * 24}px)`};
   if (scene.type === 'code') return <AbsoluteFill style={{...common, alignItems: 'center', justifyContent: 'center'}}><div style={{color: palette.accentSoft, fontSize: 19, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 20}}>{scene.title}</div><Code code={scene.code} highlights={scene.highlights} reveal={scene.reveal}/></AbsoluteFill>;
   if (scene.type === 'diagram') return <AbsoluteFill style={{...common, justifyContent: 'center'}}><h1 style={{fontWeight: 500, letterSpacing: '-.03em', fontSize: 56, margin: '0 0 50px'}}>{scene.title}</h1><div style={{display: 'flex', gap: 38, alignItems: 'center', justifyContent: 'center'}}>{scene.nodes.map((node, index) => <React.Fragment key={node.id}><div style={{padding: '28px 38px', border: `1px solid ${palette.border}`, borderRadius: 14, fontSize: 30, background: palette.panel}}>{node.label}</div>{index < scene.nodes.length - 1 && <span style={{fontSize: 42, color: palette.accent}}>→</span>}</React.Fragment>)}</div></AbsoluteFill>;

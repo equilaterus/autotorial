@@ -82,6 +82,12 @@ export function validateLesson(lesson: LessonDefinition): ValidationIssue[] {
       if (exercise.choices?.length < 2 || !Number.isInteger(exercise.answer) || exercise.answer < 0 || exercise.answer >= exercise.choices.length) {
         error(base, 'choice exercise requires choices and a valid zero-based answer');
       }
+    } else if (exercise.type === 'prompt-copy') {
+      if (!isText(exercise.copyText)) error(base, 'prompt-copy exercise requires copyText');
+    } else if (exercise.type === 'authorization') {
+      if (!isText(exercise.notice) || !isText(exercise.consentLabel) || !isText(exercise.copyText)) {
+        error(base, 'authorization exercise requires notice, consentLabel, and copyText');
+      }
     } else {
       error(`${base}.type`, 'is invalid');
     }
