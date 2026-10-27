@@ -24,13 +24,13 @@ body {
 h1,h2,h3,.brand,.eyebrow,.lesson-picker>span,button,select { font-family:"Space Grotesk",ui-sans-serif,system-ui,sans-serif; }
 code,pre,textarea,.test-results { font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace; }
 header,main { width:min(1180px,calc(100% - 36px)); margin:auto; }
-.app-header { display:grid; grid-template-columns:auto 1fr auto; gap:26px; align-items:center; padding:28px 0 24px; }
+.app-header { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:26px; align-items:center; padding:28px 0 24px; }
 .site-logo { display:flex; align-items:center; min-height:72px; padding:7px 12px; border:1px solid var(--border); border-radius:12px; background:var(--panel); }
 .site-logo img { display:block; width:170px; height:auto; }
 .lesson-heading { min-width:0; padding-left:24px; border-left:1px solid var(--border); }
 .app-header h1 span { display:block; }
 .app-header .course-kicker { color:var(--accent-soft); font-size:.42em; font-weight:600; letter-spacing:.1em; text-transform:uppercase; margin-bottom:8px; }
-.app-header h1 { margin:6px 0 0; font-size:clamp(30px,4vw,50px); font-weight:500; line-height:1.02; letter-spacing:-.035em; }
+.app-header h1 { margin:6px 0 0; font-size:clamp(28px,3.4vw,44px); font-weight:500; line-height:1.02; letter-spacing:-.035em; }
 .brand,.eyebrow { color:var(--accent-soft); letter-spacing:.1em; text-transform:uppercase; font-size:12px; font-weight:600; }
 .session-controls { display:grid; gap:10px; min-width:260px; }
 .lesson-picker { display:grid; gap:7px; min-width:210px; }
@@ -65,9 +65,6 @@ select:focus-visible,button:focus-visible,textarea:focus-visible { outline:2px s
 .consent input { width:20px; height:20px; margin:1px 0 0; accent-color:var(--accent); flex:0 0 auto; }
 .choices { display:grid; gap:10px; }
 .pass { color:#a8c49a; }.fail { color:var(--danger); }.test-results { list-style:none; padding:0; font-size:14px; line-height:1.7; }
-.final-assessment { scroll-margin-top:24px; margin:52px 0 84px; }
-.final-assessment .exercise { border-color:#5a4a43; box-shadow:0 24px 64px rgba(0,0,0,.28); }
-.assessment-complete { color:#a8c49a; font-weight:600; text-align:center; }
 .subtitle { color:var(--muted); text-align:center; min-height:52px; font-size:16px; line-height:1.65; max-width:900px; margin:22px auto; }
 @media(max-width:850px){.app-header{grid-template-columns:1fr auto}.site-logo{grid-column:1/-1;width:max-content}.lesson-heading{padding-left:0;border-left:0}}
 @media(max-width:650px){.app-header{display:flex;align-items:stretch;gap:18px;flex-direction:column}.site-logo{width:100%;justify-content:center}.session-controls,.lesson-picker{width:100%}.exercise{padding:22px}.scene-nav{grid-template-columns:1fr}.exercise textarea{font-size:14px}}
