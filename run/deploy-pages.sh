@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-deploy_dir="$repo_root/bin"
+framework_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+host_root="$(git -C "$framework_root" rev-parse --show-superproject-working-tree 2>/dev/null || true)"
+if [[ -n "$host_root" ]]; then
+  repo_root="$host_root"
+  deploy_dir="$repo_root/bin/autotorial/site"
+else
+  repo_root="$framework_root"
+  deploy_dir="$repo_root/bin"
+fi
 check_only=false
 
 if [[ "${1:-}" == "--check-only" ]]; then

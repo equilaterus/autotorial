@@ -1,15 +1,20 @@
 # GitHub Pages deployment
 
-The final repository stores its already-generated deployable website directly
-under the ignored root `bin/` directory. Deployment does not run the AutoTorial
-CLI, synthesize speech, render video, rebuild the lesson, or copy from
-`samples/`.
+The standalone repository stores its already-generated deployable website
+directly under the ignored root `bin/` directory. When AutoTorial is installed
+as a submodule, the script automatically uses the host repository's existing
+`bin/autotorial/site/` snapshot and its `origin` remote. Deployment does not run
+the AutoTorial CLI, synthesize speech, render video, rebuild the lesson, or copy
+from `samples/`.
 
 To inspect the exact snapshot that will be published without contacting the
 remote repository:
 
 ```bash
 ./run/deploy-pages.sh --check-only
+
+# From a host repository that uses lib/autotorial:
+lib/autotorial/run/deploy-pages.sh --check-only
 ```
 
 This checks the existing `bin/` snapshot, including at least one `.mp4` under
@@ -22,6 +27,9 @@ To publish that local snapshot:
 
 ```bash
 ./run/deploy-pages.sh
+
+# From a host repository that uses lib/autotorial:
+lib/autotorial/run/deploy-pages.sh
 ```
 
 The script publishes the contents of `bin/` as the branch root and force-pushes
