@@ -46,14 +46,13 @@ export interface VisualItem {
   steps?: string[];
 }
 
-export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'stack' | 'app-preview' | 'prompt-flow' | 'choices';
+export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices';
 
 export interface VisualScene extends BaseScene {
   type: 'visual';
   visual: VisualKind;
   items?: VisualItem[];
   steps?: string[];
-  focus?: number;
 }
 
 export type LessonScene = ConceptScene | CodeScene | DiagramScene | TerminalScene | VisualScene;

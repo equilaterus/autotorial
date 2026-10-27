@@ -212,25 +212,94 @@ function BrowserPage({items, steps = []}: {items: VisualItem[]; steps?: string[]
   </Window>;
 }
 
-function Stack({items, steps = [], focus = -1}: {items: VisualItem[]; steps?: string[]; focus?: number}) {
+const Tag = ({children}: {children: React.ReactNode}) => <span style={{display: 'inline-block', padding: '6px 16px', borderRadius: 999, background: c.accent, color: '#201713', fontSize: 24, fontWeight: 700, letterSpacing: 1}}>{children}</span>;
+
+/** Frontend: a mock app in a browser, with each kind of element named on the right. */
+function Frontend({items}: {items: VisualItem[]}) {
   const {show} = useStage();
-  const [front, back, data, docker] = items;
-  const dim = (i: number): React.CSSProperties => ({opacity: focus < 0 || focus === i ? 1 : 0.45});
-  const box = (item: VisualItem, i: number, width: number) => <div style={{...dim(i), width, textAlign: 'center', padding: '24px 14px', borderRadius: 16, background: c.panel, border: `2px solid ${focus === i ? c.accent : c.border}`}}>
-    <div style={{fontSize: 64}}>{item.icon}</div><div style={{fontSize: 30, fontWeight: 600, marginTop: 6}}>{item.label}</div><div style={{fontSize: 20, color: c.soft, marginTop: 4}}>{item.detail}</div>
-  </div>;
-  return <div style={{display: 'grid', gap: 18}}>
-    <div style={{...show(0.05), ...dim(3), position: 'relative', padding: '40px 18px 26px', borderRadius: 26, border: `3px dashed ${focus === 3 ? c.accent : c.border}`}}>
-      <span style={{position: 'absolute', top: -20, left: 30, padding: '4px 16px', borderRadius: 999, background: c.bg, border: `2px solid ${focus === 3 ? c.accent : c.border}`, fontSize: 24}}>{docker?.icon} {docker?.label}: {focus === 3 ? 'todo dentro de contenedores' : 'contenedores'}</span>
-      <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14}}>
-        {front && <div style={{...show(0.1)}}>{box(front, 0, 240)}</div>}
-        <div style={{...show(0.2), ...dim(1), display: 'grid', gap: 6, width: 210, textAlign: 'center', color: c.muted, fontSize: 18}}>
-          {steps.length > 0 ? steps.map((step, i) => <span key={step} style={{...show(0.25 + i * 0.1), padding: '4px 8px', background: c.raised, borderRadius: 8, color: c.text}}>→ {step}</span>) : <span style={{fontSize: 40, color: c.accent}}>⇄</span>}
+  return <div style={{display: 'grid', gridTemplateColumns: '1.45fr 1fr', gap: 36, alignItems: 'center'}}>
+    <Window title="Navegador · localhost:3000">
+      <div style={{padding: 26, background: '#10202f', minHeight: 400, display: 'grid', gap: 18, alignContent: 'start'}}>
+        <div style={{display: 'flex', gap: 14, alignItems: 'center'}}>
+          <span style={{fontSize: 30, fontWeight: 600}}>🎮 Biblioteca</span>
+          <span style={{flex: 1, padding: '10px 16px', borderRadius: 8, background: '#1b3349', color: '#7f9bb5', fontSize: 22, outline: `3px solid ${c.accent}`}}>🔍 Buscar videojuegos…</span>
         </div>
-        {back && <div style={{...show(0.15)}}>{box(back, 1, 240)}</div>}
-        <span style={{...show(0.3), ...dim(2), fontSize: 40, color: c.accent}}>⇄</span>
-        {data && <div style={{...show(0.2)}}>{box(data, 2, 240)}</div>}
+        <div style={{display: 'flex', gap: 14}}>
+          {['＋ Agregar', '♥ Favoritos', 'Cambiar usuario'].map((label, i) => <span key={label} style={{padding: '10px 18px', borderRadius: 8, background: c.blue, fontSize: 22, outline: i === 0 ? `3px solid ${c.accent}` : 'none'}}>{label}</span>)}
+        </div>
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10}}>
+          {['Commander Keen 4', 'Another World', 'Prince of Persia', 'Super Mario World'].map((name) => <div key={name} style={{borderRadius: 8, overflow: 'hidden', background: '#1b3349'}}><Cover name={name} height={70}/><div style={{padding: '4px 8px', fontSize: 15}}>{name}</div></div>)}
+        </div>
+        <div style={{padding: '12px 16px', borderRadius: 10, background: '#1b3349', display: 'flex', gap: 12, alignItems: 'center', outline: `3px solid ${c.accent}`, fontSize: 21}}>
+          <span style={{color: '#9fb7cc'}}>Nuevo videojuego</span><span style={{flex: 1, padding: '6px 10px', background: '#10202f', borderRadius: 6}}>Título…</span>
+        </div>
       </div>
+    </Window>
+    <div style={{display: 'grid', gap: 18}}>
+      <div><Tag>FRONTEND</Tag><div style={{fontSize: 28, color: c.muted, marginTop: 10}}>Lo que ves y usas en el navegador</div></div>
+      {items.map((item, i) => <div key={item.label} style={{...show(0.15 + i * 0.18), display: 'flex', gap: 16, alignItems: 'center', padding: '16px 20px', background: c.panel, border: `1px solid ${c.border}`, borderRadius: 14}}>
+        <span style={{fontSize: 46}}>{item.icon}</span><div><div style={{fontSize: 30, fontWeight: 600}}>{item.label}</div><div style={{fontSize: 21, color: c.muted}}>{item.detail}</div></div>
+      </div>)}
+      <div style={{...show(0.75), fontSize: 26, color: c.soft}}>Se construye con <b style={{color: c.text}}>React</b></div>
+    </div>
+  </div>;
+}
+
+/** Backend: requests come in, the server receives, validates and executes. */
+function Backend({items, steps = []}: {items: VisualItem[]; steps?: string[]}) {
+  const {p, show} = useStage();
+  const active = Math.min(items.length - 1, Math.floor(interpolate(p, [0.3, 0.9], [0, items.length], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})));
+  return <div style={{display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 40, alignItems: 'center'}}>
+    <div style={{display: 'grid', gap: 14}}>
+      <div style={{fontSize: 24, color: c.muted, letterSpacing: 2}}>PETICIONES DEL NAVEGADOR</div>
+      {steps.map((step, i) => <div key={step} style={{...show(0.06 + i * 0.07), display: 'flex', alignItems: 'center', gap: 16, padding: '16px 22px', background: c.panel, border: `1px solid ${c.border}`, borderRadius: 14, fontSize: 30}}>
+        <span style={{fontSize: 34, color: c.accent}}>→</span>«{step}»
+      </div>)}
+    </div>
+    <div style={{padding: 28, borderRadius: 20, background: c.panel, border: `2px solid ${c.accent}`}}>
+      <div style={{display: 'flex', gap: 14, alignItems: 'center', marginBottom: 18}}><span style={{fontSize: 52}}>⚙️</span><div><Tag>BACKEND</Tag><div style={{fontSize: 24, color: c.muted, marginTop: 6}}>El servidor · ASP.NET Core</div></div></div>
+      {items.map((item, i) => <div key={item.label} style={{display: 'flex', gap: 16, alignItems: 'center', marginTop: 10, padding: '14px 18px', borderRadius: 12, background: i <= active && p > 0.3 ? '#28211e' : c.raised, border: `1px solid ${i <= active && p > 0.3 ? c.accent : c.border}`, fontSize: 28}}>
+        <span style={{display: 'grid', placeItems: 'center', width: 40, height: 40, borderRadius: '50%', background: i <= active && p > 0.3 ? c.ok : c.border, color: '#10100f', fontWeight: 700}}>{i <= active && p > 0.3 ? '✓' : i + 1}</span>
+        <div><div style={{fontWeight: 600}}>{item.label}</div><div style={{fontSize: 20, color: c.muted}}>{item.detail}</div></div>
+      </div>)}
+    </div>
+  </div>;
+}
+
+/** Database: rows persist after the app restarts. */
+function Database({items, steps = []}: {items: VisualItem[]; steps?: string[]}) {
+  const {p, show} = useStage();
+  const restarted = p > 0.6;
+  return <div style={{display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'center'}}>
+    <div style={{borderRadius: 16, overflow: 'hidden', border: `2px solid ${c.accent}`, background: c.panel}}>
+      <div style={{display: 'flex', gap: 14, alignItems: 'center', padding: '16px 22px', background: c.raised}}><span style={{fontSize: 44}}>🗄️</span><Tag>BASE DE DATOS</Tag><span style={{fontSize: 24, color: c.muted}}>SQLite · tabla «juegos»</span></div>
+      <div style={{display: 'grid', gridTemplateColumns: '88px 2fr 1fr 1fr', gap: 16, padding: '12px 22px', fontSize: 22, color: c.muted, letterSpacing: 1}}><span/><span>TÍTULO</span><span>AÑO</span><span>FAVORITO</span></div>
+      {items.map((item, i) => <div key={item.label} style={{...show(0.08 + i * 0.1), display: 'grid', gridTemplateColumns: '88px 2fr 1fr 1fr', alignItems: 'center', gap: 16, padding: '10px 22px', fontSize: 28, borderTop: `1px solid ${c.border}`, background: i === items.length - 1 ? '#28211e' : 'transparent'}}>
+        <span style={{borderRadius: 6, overflow: 'hidden'}}><Cover name={item.label} height={50}/></span><span>{item.label}</span><span style={{color: c.muted}}>{item.detail}</span><span style={{color: c.soft}}>{i % 2 ? '♥' : '♡'}</span>
+      </div>)}
+    </div>
+    <div style={{display: 'grid', gap: 18}}>
+      {steps.map((step, i) => <div key={step} style={{...show(0.3 + i * 0.35), padding: '22px 24px', borderRadius: 16, background: i === 1 ? '#1f2a1d' : c.panel, border: `1px solid ${i === 1 ? c.ok : c.border}`, fontSize: 30, lineHeight: 1.3}}>
+        <span style={{marginRight: 12}}>{i === 0 ? '⟳' : '✓'}</span>{step}
+      </div>)}
+      {restarted && <div style={{...show(0.6), fontSize: 24, color: c.muted}}>Guardar así, de forma permanente, se llama <b style={{color: c.text}}>persistir</b>.</div>}
+    </div>
+  </div>;
+}
+
+/** Docker: one container with everything, running the same on every system. */
+function Docker({items, steps = []}: {items: VisualItem[]; steps?: string[]}) {
+  const {show} = useStage();
+  return <div style={{display: 'grid', gridTemplateColumns: '1fr auto 1.2fr', gap: 30, alignItems: 'center'}}>
+    <div style={{padding: 26, borderRadius: 20, border: `3px solid ${c.blue}`, background: c.panel}}>
+      <div style={{display: 'flex', gap: 14, alignItems: 'center', marginBottom: 16}}><span style={{fontSize: 56}}>🐳</span><Tag>CONTENEDOR</Tag></div>
+      {steps.map((step, i) => <div key={step} style={{...show(0.08 + i * 0.1), marginTop: 10, padding: '12px 16px', borderRadius: 10, background: c.raised, fontSize: 26}}>{step}</div>)}
+    </div>
+    <span style={{...show(0.5), fontSize: 64, color: c.accent}}>→</span>
+    <div style={{display: 'grid', gap: 16}}>
+      {items.map((item, i) => <div key={item.label} style={{...show(0.5 + i * 0.12), display: 'flex', alignItems: 'center', gap: 18, padding: '16px 22px', background: c.panel, border: `1px solid ${c.border}`, borderRadius: 14}}>
+        <span style={{fontSize: 48}}>{item.icon}</span><span style={{flex: 1, fontSize: 30}}>{item.label}</span><span style={{fontSize: 22, color: c.ok}}>🐳 ✓ funciona igual</span>
+      </div>)}
     </div>
   </div>;
 }
@@ -255,6 +324,51 @@ function AgentWork({steps = []}: {steps?: string[]}) {
   </div>;
 }
 
+/** Stylized, original cover art for the example games (not the official box art). */
+function Cover({name, height = 92, radius = 0}: {name: string; height?: number; radius?: number}) {
+  const stars = [[12, 14], [40, 8], [128, 12], [146, 30], [24, 40], [110, 26]].map(([x, y]) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.6" fill="#fff" opacity=".8"/>);
+  const art: Record<string, React.ReactNode> = {
+    'Commander Keen 4': <>
+      <defs><linearGradient id="keen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#5b2a63"/><stop offset="1" stopColor="#e0703c"/></linearGradient></defs>
+      <rect width="160" height="100" fill="url(#keen)"/>{stars}<circle cx="128" cy="26" r="14" fill="#f5d9a0"/>
+      <path d="M0 80 Q40 58 80 78 T160 70 V100 H0z" fill="#8a2f2a"/><path d="M0 90 Q50 74 100 90 T160 86 V100 H0z" fill="#5e1d1d"/>
+      <rect x="66" y="52" width="26" height="30" rx="5" fill="#f2f2f2"/><circle cx="79" cy="46" r="17" fill="#f7d33a"/><ellipse cx="82" cy="48" rx="10" ry="7" fill="#1c1c24"/><rect x="62" y="30" width="34" height="6" rx="3" fill="#d8392b"/>
+    </>,
+    'Another World': <>
+      <defs><linearGradient id="aw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#0f2a4d"/><stop offset="1" stopColor="#2a8c9a"/></linearGradient></defs>
+      <rect width="160" height="100" fill="url(#aw)"/><circle cx="118" cy="30" r="22" fill="#f08a3c"/><circle cx="96" cy="22" r="8" fill="#f7c77a" opacity=".9"/>
+      <path d="M0 74 Q30 62 60 74 T120 72 T160 70 V100 H0z" fill="#0b1c2e"/><path d="M0 88 Q40 80 80 88 T160 86 V100 H0z" fill="#071320"/>
+      <path d="M44 74 l6 -22 l6 22z M52 52 m-4 -8 a4 4 0 1 1 8 0 a4 4 0 1 1 -8 0" fill="#e9eef2"/><path d="M104 76 q8 -30 14 0z" fill="#f08a3c"/>
+    </>,
+    'Prince of Persia': <>
+      <defs><linearGradient id="pp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2b1d4a"/><stop offset="1" stopColor="#e8a24f"/></linearGradient></defs>
+      <rect width="160" height="100" fill="url(#pp)"/><path d="M122 14 a14 14 0 1 0 12 22 a11 11 0 1 1 -12 -22z" fill="#f5e6b8"/>
+      <path d="M20 100 V46 Q20 14 52 14 Q84 14 84 46 V100 H70 V48 Q70 26 52 26 Q34 26 34 48 V100z" fill="#2a1a12"/>
+      <rect x="0" y="86" width="160" height="14" fill="#4a2f1f"/><rect x="100" y="52" width="14" height="36" rx="5" fill="#f4f0e6"/><circle cx="107" cy="46" r="8" fill="#e0b48a"/><rect x="98" y="38" width="18" height="6" rx="3" fill="#c0392b"/><rect x="116" y="60" width="22" height="3" fill="#d8dde2"/>
+    </>,
+    'Prince of Persia 2': <>
+      <defs><linearGradient id="p2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1a1040"/><stop offset="1" stopColor="#7a2a6e"/></linearGradient></defs>
+      <rect width="160" height="100" fill="url(#p2)"/>{stars}
+      <path d="M80 18 C100 40 108 56 96 72 C90 80 70 80 64 72 C52 56 62 40 80 18z" fill="#f08a3c"/><path d="M80 40 C90 54 92 62 86 70 C82 74 76 74 74 70 C68 62 72 54 80 40z" fill="#f7d33a"/>
+      <path d="M0 100 V70 Q0 56 14 56 H26 V100z M134 100 V56 H146 Q160 56 160 70 V100z" fill="#12091f"/><rect x="0" y="90" width="160" height="10" fill="#241238"/>
+    </>,
+    'Super Mario World': <>
+      <rect width="160" height="100" fill="#5fb7f2"/><ellipse cx="36" cy="22" rx="20" ry="8" fill="#fff"/><ellipse cx="52" cy="26" rx="16" ry="7" fill="#fff"/><ellipse cx="124" cy="16" rx="18" ry="7" fill="#fff"/>
+      <path d="M0 100 V70 Q30 40 62 70 Q90 50 120 74 Q146 58 160 70 V100z" fill="#3fa34d"/><rect x="0" y="86" width="160" height="14" fill="#7a4a2b"/>
+      <rect x="64" y="38" width="26" height="26" rx="3" fill="#f7c331" stroke="#a8701a" strokeWidth="2"/><text x="77" y="58" textAnchor="middle" fontSize="20" fontWeight="700" fill="#a8701a">?</text>
+      <circle cx="120" cy="66" r="9" fill="#e23b2e"/><rect x="113" y="73" width="14" height="12" rx="3" fill="#2e4fa3"/>
+    </>,
+    'Simon the Sorcerer 2': <>
+      <defs><linearGradient id="ss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2e1a5e"/><stop offset="1" stopColor="#6b3fa0"/></linearGradient></defs>
+      <rect width="160" height="100" fill="url(#ss)"/>{stars}
+      <path d="M80 6 L112 74 H48z" fill="#5a2d9c" stroke="#f7d33a" strokeWidth="2"/><ellipse cx="80" cy="76" rx="44" ry="9" fill="#4a2380" stroke="#f7d33a" strokeWidth="2"/>
+      <path d="M80 30 l3 7 l8 1 l-6 5 l2 8 l-7 -4 l-7 4 l2 -8 l-6 -5 l8 -1z" fill="#f7d33a"/><circle cx="96" cy="58" r="3" fill="#f7d33a"/><circle cx="66" cy="62" r="2.4" fill="#f7d33a"/>
+      <path d="M52 92 Q80 84 108 92 V100 H52z" fill="#1d0f3d"/>
+    </>,
+  };
+  return <svg viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" style={{display: 'block', width: '100%', height, borderRadius: radius}} role="img" aria-label={`Portada de ${name}`}>{art[name] ?? <rect width="160" height="100" fill="#2a3a4a"/>}</svg>;
+}
+
 const GAMES = [['Commander Keen 4', 1991, '#3a6ea5'], ['Another World', 1991, '#8a4f7d'], ['Prince of Persia', 1989, '#b5793a'], ['Prince of Persia 2', 1993, '#7a5ca8'], ['Super Mario World', 1990, '#4f9d5d'], ['Simon the Sorcerer 2', 1995, '#a8503a']] as const;
 
 function AppPreview({items, checks = []}: {items: VisualItem[]; checks?: string[]}) {
@@ -271,8 +385,8 @@ function AppPreview({items, checks = []}: {items: VisualItem[]; checks?: string[
           <span style={{padding: '8px 14px', borderRadius: 6, background: c.blue, fontSize: 18}}>{user?.icon} {user?.label} · Cambiar usuario</span>
         </div>
         <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14}}>
-          {GAMES.map(([name, year, color], i) => <div key={name} style={{...show(0.04 + i * 0.05), background: '#1b3349', borderRadius: 8, overflow: 'hidden'}}>
-            <div style={{height: 92, background: `linear-gradient(135deg, ${color}, #0d1b29)`, display: 'grid', placeItems: 'center', fontSize: 40}}>🕹️</div>
+          {GAMES.map(([name, year], i) => <div key={name} style={{...show(0.04 + i * 0.05), background: '#1b3349', borderRadius: 8, overflow: 'hidden'}}>
+            <Cover name={name} height={92}/>
             <div style={{padding: '8px 10px'}}><div style={{fontSize: 18}}>{name}</div><div style={{fontSize: 15, color: '#7f9bb5'}}>{year} · {i % 2 ? '♥ Favorito' : '♡'}</div></div>
           </div>)}
         </div>
@@ -330,7 +444,10 @@ export function VisualScene({scene}: {scene: VisualSceneData}) {
     : scene.visual === 'open-folder' ? <OpenFolder items={items}/>
     : scene.visual === 'open-chat' ? <OpenChat items={items}/>
     : scene.visual === 'browser-page' ? <BrowserPage items={items} steps={scene.steps}/>
-    : scene.visual === 'stack' ? <Stack items={items} steps={scene.steps} focus={scene.focus}/>
+    : scene.visual === 'frontend' ? <Frontend items={items}/>
+    : scene.visual === 'backend' ? <Backend items={items} steps={scene.steps}/>
+    : scene.visual === 'database' ? <Database items={items} steps={scene.steps}/>
+    : scene.visual === 'docker' ? <Docker items={items} steps={scene.steps}/>
     : scene.visual === 'agent-work' ? <AgentWork steps={scene.steps}/>
     : scene.visual === 'app-preview' ? <AppPreview items={items} checks={scene.steps}/>
     : scene.visual === 'prompt-flow' ? <PromptFlow items={items}/>

@@ -1,6 +1,6 @@
 # Lesson format
 
-Every lesson lives at `lessons/<slug>/INDEX.md`. YAML frontmatter holds the searchable metadata. The lesson itself is written once, in reading order, under a `## Partes` heading:
+Every lesson lives at `lessons/<slug>/INDEX.md`. YAML frontmatter holds the searchable metadata. The lesson itself is written once, , , , , , in reading order, under a `## Partes` heading:
 
 ````markdown
 ## Partes
