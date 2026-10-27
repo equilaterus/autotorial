@@ -55,4 +55,53 @@ objectives: [Copiar un prompt]
     const {lesson} = await parseLesson(root, 'copy');
     expect(validateLesson(lesson)).toEqual([]);
   });
+
+  it('reads the single-source layout: prose is narration, scene and exercise blocks belong to their section', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'autotorial-parts-'));
+    await mkdir(path.join(root, 'lessons', 'parts'), {recursive: true});
+    await writeFile(path.join(root, 'lessons', 'parts', 'INDEX.md'), `---
+title: Partes
+language: es
+objectives: [Aprender]
+---
+
+# Notas
+
+## Partes
+
+### 1. Primera parte
+
+Hola. Esto se escucha.
+
+Y esto también.
+
+\`\`\`scene
+type: concept
+body: Cuerpo
+\`\`\`
+
+\`\`\`exercise
+type: multiple-choice
+prompt: ¿Listo?
+choices: [Sí, No]
+answer: 0
+explanation: Claro.
+\`\`\`
+
+### 2. Segunda parte
+
+Adiós.
+
+## Notas finales
+
+Ignorado.
+`);
+    const {lesson} = await parseLesson(root, 'parts');
+    expect(lesson.scenes.map((scene) => [scene.id, scene.title, scene.narration])).toEqual([
+      ['primera-parte', 'Primera parte', 'Hola. Esto se escucha. Y esto también.'],
+      ['segunda-parte', 'Segunda parte', 'Adiós.'],
+    ]);
+    expect(lesson.exercises).toMatchObject([{id: 'primera-parte-1', afterScene: 'primera-parte', answer: 0}]);
+    expect(validateLesson(lesson)).toEqual([]);
+  });
 });

@@ -1,6 +1,34 @@
 # Lesson format
 
-Every lesson lives at `lessons/<slug>/INDEX.md`. YAML frontmatter holds the searchable metadata; one fenced `autotorial` JSON block holds deterministic scene and exercise data. Everything else is ordinary author-facing Markdown.
+Every lesson lives at `lessons/<slug>/INDEX.md`. YAML frontmatter holds the searchable metadata. The lesson itself is written once, in reading order, under a `## Partes` heading:
+
+````markdown
+## Partes
+
+### 1. Instálalo y ábrelo
+
+Ahora instálalo. En Windows, abre el instalador… (this prose is the narration that is spoken)
+
+```scene
+id: install-editor        # optional; defaults to a slug of the title
+type: visual
+visual: installer
+items: [...]
+```
+
+```exercise
+id: quiz-install          # optional; defaults to <scene id>-<n>
+type: multiple-choice
+prompt: ¿Cómo instalas Visual Studio Code en macOS?
+choices: [Arrastrándolo a Aplicaciones, Escribiendo sudo dnf install]
+answer: 0
+explanation: En macOS se arrastra la aplicación a Aplicaciones.
+```
+````
+
+Each `###` heading is one scene and, in the player, one screen. The title loses its leading number, plain prose becomes `narration`, the `scene` block holds the remaining scene fields (`type` defaults to `concept`) and every `exercise` block is an exercise of that scene (`afterScene` is implied). Anything after the next `##` heading is free author notes. Nothing is defined twice.
+
+The older layout still works: one fenced `autotorial` JSON block with `scenes` and `exercises`, as below.
 
 ````markdown
 ---

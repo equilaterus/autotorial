@@ -188,6 +188,53 @@ function OpenChat({items}: {items: VisualItem[]}) {
   </VsCode>;
 }
 
+function BrowserPage({items, steps = []}: {items: VisualItem[]; steps?: string[]}) {
+  const {p, show} = useStage();
+  const url = steps[0] ?? 'una-direccion.com';
+  const typed = url.slice(0, Math.round(interpolate(p, [0.05, 0.4], [0, url.length], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})));
+  const entered = p > 0.45;
+  return <Window title="Navegador">
+    <div style={{display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px', background: c.raised}}>
+      <span style={{color: c.muted}}>←  →  ⟳</span>
+      <span style={{flex: 1, padding: '8px 18px', borderRadius: 999, background: c.code, fontFamily: mono, fontSize: 24, border: `1px solid ${entered ? c.ok : c.accent}`}}>🔒 {typed}<span style={{opacity: entered ? 0 : 0.7}}>|</span></span>
+    </div>
+    <div style={{padding: '30px 50px', background: '#1a1a1d', minHeight: 330}}>
+      <div style={{display: 'grid', gridTemplateColumns: `repeat(${items.length}, 1fr)`, gap: 22}}>
+        {items.map((item, i) => {
+          const app = i === items.length - 1;
+          return <div key={item.label} style={{...show(0.12 + i * 0.08), padding: '26px 16px', borderRadius: 14, textAlign: 'center', background: app ? '#28211e' : c.panel, border: `1px solid ${app ? c.accent : c.border}`, opacity: app && !entered ? 0.35 : 1}}>
+            <div style={{fontSize: 70}}>{item.icon}</div><div style={{fontSize: 26, marginTop: 8}}>{item.label}</div>
+          </div>;
+        })}
+      </div>
+      {entered && <div style={{...show(0.45), marginTop: 26, textAlign: 'center', fontSize: 28, color: c.ok}}>Una dirección y ya estás dentro de la aplicación, sin instalar nada</div>}
+    </div>
+  </Window>;
+}
+
+function Stack({items, steps = [], focus = -1}: {items: VisualItem[]; steps?: string[]; focus?: number}) {
+  const {show} = useStage();
+  const [front, back, data, docker] = items;
+  const dim = (i: number): React.CSSProperties => ({opacity: focus < 0 || focus === i ? 1 : 0.45});
+  const box = (item: VisualItem, i: number, width: number) => <div style={{...dim(i), width, textAlign: 'center', padding: '24px 14px', borderRadius: 16, background: c.panel, border: `2px solid ${focus === i ? c.accent : c.border}`}}>
+    <div style={{fontSize: 64}}>{item.icon}</div><div style={{fontSize: 30, fontWeight: 600, marginTop: 6}}>{item.label}</div><div style={{fontSize: 20, color: c.soft, marginTop: 4}}>{item.detail}</div>
+  </div>;
+  return <div style={{display: 'grid', gap: 18}}>
+    <div style={{...show(0.05), ...dim(3), position: 'relative', padding: '40px 18px 26px', borderRadius: 26, border: `3px dashed ${focus === 3 ? c.accent : c.border}`}}>
+      <span style={{position: 'absolute', top: -20, left: 30, padding: '4px 16px', borderRadius: 999, background: c.bg, border: `2px solid ${focus === 3 ? c.accent : c.border}`, fontSize: 24}}>{docker?.icon} {docker?.label}: {focus === 3 ? 'todo dentro de contenedores' : 'contenedores'}</span>
+      <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14}}>
+        {front && <div style={{...show(0.1)}}>{box(front, 0, 240)}</div>}
+        <div style={{...show(0.2), ...dim(1), display: 'grid', gap: 6, width: 210, textAlign: 'center', color: c.muted, fontSize: 18}}>
+          {steps.length > 0 ? steps.map((step, i) => <span key={step} style={{...show(0.25 + i * 0.1), padding: '4px 8px', background: c.raised, borderRadius: 8, color: c.text}}>→ {step}</span>) : <span style={{fontSize: 40, color: c.accent}}>⇄</span>}
+        </div>
+        {back && <div style={{...show(0.15)}}>{box(back, 1, 240)}</div>}
+        <span style={{...show(0.3), ...dim(2), fontSize: 40, color: c.accent}}>⇄</span>
+        {data && <div style={{...show(0.2)}}>{box(data, 2, 240)}</div>}
+      </div>
+    </div>
+  </div>;
+}
+
 function AgentWork({steps = []}: {steps?: string[]}) {
   const {p, show} = useStage();
   return <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 26}}>
@@ -215,7 +262,8 @@ function AppPreview({items, checks = []}: {items: VisualItem[]; checks?: string[
   const admin = p > 0.55;
   const user = items[admin ? 1 : 0];
   return <div style={{display: 'flex', gap: 30, alignItems: 'flex-start'}}>
-    <Window title="localhost:3000 — Biblioteca de videojuegos" style={{flex: 1}}>
+    <Window title="Navegador" style={{flex: 1}}>
+      <div style={{padding: '8px 16px', background: c.raised, fontFamily: mono, fontSize: 19}}>🔒 localhost:3000</div>
       <div style={{background: '#10202f', padding: 20, minHeight: 440}}>
         <div style={{display: 'flex', gap: 14, alignItems: 'center', marginBottom: 18}}>
           <span style={{fontSize: 26, fontWeight: 600}}>🎮 Biblioteca</span>
@@ -232,7 +280,7 @@ function AppPreview({items, checks = []}: {items: VisualItem[]; checks?: string[
       </div>
     </Window>
     {checks.length > 0 && <div style={{width: 380, display: 'grid', gap: 14}}>
-      {checks.map((check, i) => <div key={check} style={{...show(0.1 + i * 0.17), padding: '16px 18px', background: c.panel, border: `1px solid ${c.border}`, borderRadius: 12, fontSize: 24}}><span style={{color: c.ok, marginRight: 10}}>✓</span>{check}</div>)}
+      {checks.map((check, i) => { const tip = check.startsWith('💡'); return <div key={check} style={{...show(0.1 + i * 0.17), padding: '16px 18px', background: tip ? '#28211e' : c.panel, border: `1px solid ${tip ? c.accent : c.border}`, borderRadius: 12, fontSize: tip ? 21 : 24, lineHeight: 1.35}}>{tip ? check : <><span style={{color: c.ok, marginRight: 10}}>✓</span>{check}</>}</div>; })}
     </div>}
   </div>;
 }
@@ -281,6 +329,8 @@ export function VisualScene({scene}: {scene: VisualSceneData}) {
     : scene.visual === 'extensions' ? <Extensions items={items}/>
     : scene.visual === 'open-folder' ? <OpenFolder items={items}/>
     : scene.visual === 'open-chat' ? <OpenChat items={items}/>
+    : scene.visual === 'browser-page' ? <BrowserPage items={items} steps={scene.steps}/>
+    : scene.visual === 'stack' ? <Stack items={items} steps={scene.steps} focus={scene.focus}/>
     : scene.visual === 'agent-work' ? <AgentWork steps={scene.steps}/>
     : scene.visual === 'app-preview' ? <AppPreview items={items} checks={scene.steps}/>
     : scene.visual === 'prompt-flow' ? <PromptFlow items={items}/>

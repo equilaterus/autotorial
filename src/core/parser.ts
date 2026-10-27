@@ -5,6 +5,39 @@ import YAML from 'yaml';
 import type {LessonDefinition, ValidationIssue} from './types';
 
 const DATA_BLOCK = /```autotorial\s*\n([\s\S]*?)\n```/m;
+const PARTS_HEADING = /^## Partes\s*$/m;
+const FENCE = /```(scene|exercise)[ \t]*\n([\s\S]*?)\n```/g;
+
+/**
+ * Single-source layout: every `### Title` under `## Partes` is one scene. Its plain prose is the narration,
+ * a ```scene block holds the remaining scene fields and each ```exercise block is an exercise of that scene.
+ */
+function parseParts(file: string, body: string): {scenes: unknown[]; exercises: unknown[]} {
+  const start = body.search(PARTS_HEADING);
+  const rest = body.slice(start).replace(PARTS_HEADING, '');
+  const end = rest.search(/^## /m);
+  const sections = (end < 0 ? rest : rest.slice(0, end)).split(/^### /m).slice(1);
+  const scenes: Record<string, unknown>[] = [];
+  const exercises: Record<string, unknown>[] = [];
+  for (const section of sections) {
+    const newline = section.indexOf('\n');
+    const title = section.slice(0, newline < 0 ? undefined : newline).replace(/^\d+\.\s*/, '').trim();
+    let scene: Record<string, unknown> = {};
+    const pending: Record<string, unknown>[] = [];
+    const prose = section.slice(newline < 0 ? section.length : newline).replace(FENCE, (_match, kind: string, source: string) => {
+      let value: unknown;
+      try { value = YAML.parse(source) ?? {}; } catch (error) { throw new Error(`${file}: invalid ${kind} block in "${title}": ${(error as Error).message}`); }
+      if (kind === 'scene') scene = value as Record<string, unknown>;
+      else pending.push(value as Record<string, unknown>);
+      return '';
+    });
+    const id = String(scene.id ?? title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+    const narration = prose.split(/\n\s*\n/).map((paragraph) => paragraph.replace(/\s*\n\s*/g, ' ').trim()).filter(Boolean).join(' ');
+    scenes.push({id, type: 'concept', title, ...scene, narration});
+    pending.forEach((exercise, index) => exercises.push({id: `${id}-${index + 1}`, afterScene: id, ...exercise}));
+  }
+  return {scenes, exercises};
+}
 
 function parseFrontmatter(source: string): {attributes: Record<string, unknown>; body: string} {
   if (!source.startsWith('---\n')) return {attributes: {}, body: source};
@@ -20,13 +53,17 @@ export async function parseLesson(hostRoot: string, slug: string): Promise<{less
   const file = path.join(hostRoot, 'lessons', slug, 'INDEX.md');
   const source = await readFile(file, 'utf8');
   const {attributes, body} = parseFrontmatter(source);
-  const match = body.match(DATA_BLOCK);
-  if (!match) throw new Error(`${file}: missing \`\`\`autotorial JSON block`);
   let structured: Record<string, unknown>;
-  try {
-    structured = JSON.parse(match[1]) as Record<string, unknown>;
-  } catch (error) {
-    throw new Error(`${file}: invalid autotorial JSON: ${(error as Error).message}`);
+  if (PARTS_HEADING.test(body)) {
+    structured = parseParts(file, body);
+  } else {
+    const match = body.match(DATA_BLOCK);
+    if (!match) throw new Error(`${file}: missing a "## Partes" section or \`\`\`autotorial JSON block`);
+    try {
+      structured = JSON.parse(match[1]) as Record<string, unknown>;
+    } catch (error) {
+      throw new Error(`${file}: invalid autotorial JSON: ${(error as Error).message}`);
+    }
   }
   return {
     source,
@@ -64,7 +101,7 @@ export function validateLesson(lesson: LessonDefinition): ValidationIssue[] {
     if (!isText(scene.narration)) error(`${base}.narration`, 'is required');
     if (scene.type === 'code' && !isText(scene.code)) error(`${base}.code`, 'is required');
     if (scene.type === 'diagram' && (!scene.nodes?.length || !Array.isArray(scene.edges))) error(base, 'diagram requires nodes and edges');
-    if (scene.type === 'visual' && !['timeline', 'browser-download', 'installer', 'extensions', 'open-folder', 'open-chat', 'agent-work', 'app-preview', 'prompt-flow', 'choices'].includes(scene.visual)) error(`${base}.visual`, 'is invalid');
+    if (scene.type === 'visual' && !['timeline', 'browser-download', 'installer', 'extensions', 'open-folder', 'open-chat', 'agent-work', 'browser-page', 'stack', 'app-preview', 'prompt-flow', 'choices'].includes(scene.visual)) error(`${base}.visual`, 'is invalid');
     if (scene.type === 'terminal' && (!isText(scene.command) || typeof scene.output !== 'string')) error(base, 'terminal requires command and output');
   });
   const exerciseIds = new Set<string>();
