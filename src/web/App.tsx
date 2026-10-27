@@ -59,16 +59,25 @@ export default function App() {
     setCompleted((previous) => new Set(previous).add(id));
   };
   const stepDone = (id: string) => { const own = lesson.exercises.filter((item) => item.afterScene === id && item.type !== 'authorization' && item.type !== 'prompt-copy'); return own.length > 0 && own.every((item) => completed.has(item.id)); };
-  return <><header className="app-header">
-    <a className="site-logo" href="https://thescienceofcode.com/" target="_blank" rel="noreferrer" aria-label="The Science of Code">
+  return <><header className="site-bar"><div className="site-bar-inner">
+    <a className="site-logo" href="https://thescienceofcode.com/" aria-label="The Science of Code">
       <img src="https://thescienceofcode.com/images/the-science-of-code.png" alt="The Science of Code" />
     </a>
+    <nav className="site-nav" aria-label="The Science of Code">
+      <a href="https://thescienceofcode.com/">Home</a>
+      <a href="https://thescienceofcode.com/post/">Posts</a>
+      <a className="extra" href="https://thescienceofcode.com/categories/">Categories</a>
+      <a className="extra" href="https://thescienceofcode.com/tags/">Tags</a>
+    </nav>
+    <span className="site-bar-end" aria-hidden="true"/>
+  </div></header>
+  <div className="lesson-head">
     <div className="lesson-heading">{lesson.courseTitle ? <h1>{lesson.courseTitle.split('\n').map((line, index) => <span key={line} className={index === 0 ? 'course-kicker' : undefined}>{line}</span>)}</h1> : <h1>{lesson.title}</h1>}</div>
     <div className="session-controls">
       <label className="lesson-picker"><span>Seleccionar lección</span><select value={lesson.slug} onChange={(event) => {const session = course.sessions.find((item) => item.slug === event.target.value); if (session) void loadSession(session);}}>{course.sessions.map((session) => <option key={session.slug} value={session.slug}>{session.title}</option>)}</select></label>
       {course.sessions.length > 1 && <nav className="session-pagination" aria-label="Navegación entre sesiones"><button disabled={sessionIndex <= 0} onClick={() => goToSession(sessionIndex - 1)}>← Anterior</button><span>{sessionIndex + 1} / {course.sessions.length}</span><button disabled={sessionIndex >= course.sessions.length - 1} onClick={() => goToSession(sessionIndex + 1)}>Siguiente →</button></nav>}
     </div>
-  </header>
+  </div>
     <main>
       <div ref={stepTop} className="step-head"><span className="eyebrow">Parte {currentScene + 1} de {lesson.scenes.length}</span></div>
       <nav className="scene-nav" aria-label="Partes de la lección">{lesson.scenes.map((item, index) => <button key={item.id} className={index === currentScene ? 'active' : ''} aria-current={index === currentScene ? 'true' : undefined} title={item.title} aria-label={`Parte ${index + 1}: ${item.title}`} onClick={() => go(index)}>{stepDone(item.id) ? '✓' : index + 1}</button>)}</nav>
