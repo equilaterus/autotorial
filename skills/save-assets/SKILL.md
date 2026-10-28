@@ -8,7 +8,7 @@ description: Save or restore the generated lesson assets that Git ignores (narra
 Producing a lesson generates files under the ignored `bin/autotorial/`: narration audio, the produced lesson JSON and the exported MP4. They are expensive to recreate, so keep a snapshot in the orphan branch `lessons` with the installed project command:
 
 ```bash
-.autotorial/save-assets            # snapshot bin/autotorial into the lessons branch and push it
+.autotorial/save-assets            # snapshot bin/autotorial into the lessons branch and push it (the default)
 .autotorial/save-assets --no-push  # commit locally only
 .autotorial/save-assets --no-video # skip the MP4 (about two thirds of the size)
 .autotorial/save-assets status     # show what the branch holds (manifest.json)
@@ -19,4 +19,4 @@ Only the audio that the produced lessons use is saved. The branch contains `auto
 
 After `restore`, run `.autotorial/autotorial produce <session>`, which reuses the saved narration without regenerating it, then `publish`. The branch is not the deployment: never use it for GitHub Pages and do not create workflows for it; deploy only with `.autotorial/deploy-pages`.
 
-Save pushes a new branch to the remote, so do it only when the user asks. If `.autotorial/save-assets` is missing, run `lib/autotorial/install.sh`.
+A save is only a save state once it is on the remote, so always run it with the default push and never add `--no-push` unless the user asks for a local-only snapshot. Check that the output ends with `Pushed lessons to origin`; if the push fails, report the error instead of calling the state saved. Save after every production or change that regenerates audio, so a restore never goes back further than the last work. If `.autotorial/save-assets` is missing, run `lib/autotorial/install.sh`.
