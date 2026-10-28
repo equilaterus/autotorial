@@ -87,3 +87,8 @@ Exercise types are `multiple-choice`, `output-prediction`, `code-completion`, `p
 Add one `lessons/<slug>/INDEX.md` directory per session and run `produce` for each one before publishing. The generated course index sorts sessions by filename/slug. The web player shows a session selector and, when the course contains more than one session, explicit **Anterior** and **Siguiente** controls.
 
 Use sortable slugs such as `session-0`, `session-1`, and `session-2` when sequence matters. The sample course starts with `session-0` (JavaScript: Hola mundo) and continues with `session-1` (Funciones en JavaScript).
+
+## Course contents
+
+`lessons/INDEX.md` is the optional table of contents of the whole course. Its frontmatter `title` is the course name and its Markdown table `| # | Lección | Contenido |` lists every lesson; row N is the lesson in `lessons/session-N/`. The player opens on this page: lessons that have been produced link to their player (`#/session-N`) and the rest show «Próximamente». Without this file the player lists only the produced lessons.
+

@@ -4,6 +4,7 @@ import {contentHash, parseLesson, validateLesson} from './parser';
 import {runExerciseInNode} from './executor';
 import type {ProducedLesson} from './types';
 import {AUDIO_LEAD_IN} from './timing';
+import {parseCourseIndex, type CourseIndex} from './course';
 import {generateNarration, type VoiceOptions} from '../voice';
 
 export const outputRoot = (hostRoot: string) => path.join(hostRoot, 'bin', 'autotorial');
@@ -26,7 +27,11 @@ async function writeCourseIndex(hostRoot: string): Promise<void> {
   for (const file of files) {
     await writeFile(path.join(publicDir, 'lessons', file), await readFile(path.join(generatedDir, file)));
   }
-  await writeFile(path.join(publicDir, 'course.json'), JSON.stringify({schemaVersion: 1, sessions}, null, 2));
+  let course: CourseIndex = {title: '', contents: []};
+  try { course = parseCourseIndex(await readFile(path.join(hostRoot, 'lessons', 'INDEX.md'), 'utf8')); } catch { /* the course has no table of contents */ }
+  const available = new Set(sessions.map((session) => session.slug));
+  const contents = course.contents.map((entry) => ({...entry, available: available.has(entry.slug)}));
+  await writeFile(path.join(publicDir, 'course.json'), JSON.stringify({schemaVersion: 1, ...(course.title ? {title: course.title} : {}), ...(contents.length ? {contents} : {}), sessions}, null, 2));
 }
 
 export async function validateSession(hostRoot: string, slug: string) {

@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {describe, expect, it} from 'vitest';
 import {parseLesson, validateLesson} from '../src/core/parser';
+import {parseCourseIndex} from '../src/core/course';
 
 describe('lesson parsing and validation', () => {
   it('parses frontmatter and the embedded structured block', async () => {
@@ -144,5 +145,22 @@ Sola.
     ]);
     expect(lesson.exercises).toMatchObject([{id: 'uno-1', afterScene: 'uno'}]);
     expect(validateLesson(lesson)).toEqual([]);
+  });
+
+  it('reads the course table of contents: row N is lessons/session-N', () => {
+    const index = parseCourseIndex(`---
+title: Curso
+---
+
+| # | Lección | Contenido |
+|---|---------|-----------|
+| 1 | Primera | Una cosa | y otra. |
+| 2 | Segunda | Otra |
+`);
+    expect(index.title).toBe('Curso');
+    expect(index.contents).toEqual([
+      {number: 1, title: 'Primera', description: 'Una cosa|y otra.', slug: 'session-1'},
+      {number: 2, title: 'Segunda', description: 'Otra', slug: 'session-2'},
+    ]);
   });
 });

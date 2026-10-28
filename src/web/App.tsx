@@ -5,15 +5,31 @@ import type {Exercise, ProducedLesson} from '../core/types';
 import {ExercisePanel} from './components/ExercisePanel';
 import {FPS, LessonComposition, sceneFrames} from './components/LessonComposition';
 import {SiteFooter} from './components/SiteFooter';
+import {Home, type ContentEntry} from './components/Home';
 import {groupParts} from './parts';
 
 interface CourseSession {slug: string; title: string; href: string}
-interface Course {sessions: CourseSession[]}
+interface Course {title?: string; contents?: ContentEntry[]; sessions: CourseSession[]}
+
+const readRoute = () => window.location.hash.replace(/^#\/?/, '');
+const navigate = (slug: string) => { window.location.hash = slug ? `#/${slug}` : '#/'; };
+
+/** The black bar shared by the contents page and the lessons. */
+function Bar({title, children}: {title: string; children?: React.ReactNode}) {
+  return <header className="site-bar"><div className="site-bar-inner">
+    <a className="site-logo" href="https://thescienceofcode.com/" aria-label="The Science of Code">
+      <img src="https://thescienceofcode.com/images/the-science-of-code.png" alt="The Science of Code" />
+    </a>
+    <h1 className="bar-title"><a href="#/">{title}</a></h1>
+    {children}
+  </div></header>;
+}
 
 const isGate = (item: Exercise) => item.type !== 'authorization' && item.type !== 'prompt-copy';
 
 export default function App() {
   const [course, setCourse] = useState<Course>();
+  const [route, setRoute] = useState(readRoute);
   const [lesson, setLesson] = useState<ProducedLesson>();
   const [currentPart, setCurrentPart] = useState(0);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
@@ -36,7 +52,19 @@ export default function App() {
       setCurrentPart(resume);
     }).catch((failure) => setError(String(failure)));
   };
-  useEffect(() => { fetch('./course.json').then((value) => value.json()).then((value: Course) => {setCourse(value); if (value.sessions[0]) return loadSession(value.sessions[0]);}).catch((failure) => setError(String(failure))); }, []);
+  useEffect(() => { fetch('./course.json').then((value) => value.json()).then((value: Course) => setCourse(value)).catch((failure) => setError(String(failure))); }, []);
+  useEffect(() => {
+    const onHash = () => { setRoute(readRoute()); window.scrollTo(0, 0); };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+  useEffect(() => {
+    if (!course || !route) return;
+    const session = course.sessions.find((item) => item.slug === route);
+    if (!session) { setError(`No existe la lección «${route}».`); return; }
+    setError('');
+    if (lesson?.slug !== route) void loadSession(session);
+  }, [course, route]);
   useEffect(() => {
     if (!lesson) return;
     setCompleted(new Set(lesson.exercises.filter((item) => localStorage.getItem(`autotorial:${lesson.slug}:${item.id}`) === 'complete').map((item) => item.id)));
@@ -75,7 +103,10 @@ export default function App() {
     return () => { current.removeEventListener('ended', onEnded); current.removeEventListener('play', onPlay); current.removeEventListener('fullscreenchange', onFullscreen); };
   }, [lesson, currentPart]);
   if (error) return <main><h1>No se pudo cargar el curso</h1><pre>{error}</pre></main>;
-  if (!course || !lesson) return <main><p>Cargando la lección…</p></main>;
+  if (!course) return <main><p>Cargando…</p></main>;
+  const courseTitle = course.title ?? (lesson?.courseTitle ?? 'Cursos').replace('\n', ' ');
+  if (!route) return <><Bar title={courseTitle}/><Home title={courseTitle} contents={course.contents ?? course.sessions.map((item, index) => ({number: index + 1, title: item.title, description: '', slug: item.slug, available: true}))}/><SiteFooter/></>;
+  if (!lesson || lesson.slug !== route) return <><Bar title={courseTitle}/><main><p>Cargando la lección…</p></main><SiteFooter/></>;
   const parts = groupParts(lesson);
   const part = parts[currentPart];
   const sceneIds = new Set(part.scenes.map((item) => item.id));
@@ -89,7 +120,7 @@ export default function App() {
   const sessionIndex = course.sessions.findIndex((session) => session.slug === lesson.slug);
   const goToSession = (index: number) => {
     const session = course.sessions[index];
-    if (session) void loadSession(session);
+    if (session) navigate(session.slug);
   };
   const go = (index: number, play = false) => {
     setAutoPlay(play);
@@ -116,19 +147,16 @@ export default function App() {
     setConfirmReset(false);
     go(0);
   };
-  const titleLines = lesson.courseTitle ? lesson.courseTitle.split('\n') : [lesson.title];
-  return <><header className="site-bar"><div className="site-bar-inner">
-    <a className="site-logo" href="https://thescienceofcode.com/" aria-label="The Science of Code">
-      <img src="https://thescienceofcode.com/images/the-science-of-code.png" alt="The Science of Code" />
-    </a>
-    <h1 className="bar-title">{titleLines.length > 1 && <span className="kicker">{titleLines[0]}</span>}<span>{titleLines[titleLines.length - 1]}</span></h1>
+  const options = course.contents ?? course.sessions.map((item, index) => ({number: index + 1, title: item.title, description: '', slug: item.slug, available: true}));
+  return <><Bar title={courseTitle}>
     <div className="bar-lessons">
-      <select aria-label="Seleccionar lección" value={lesson.slug} onChange={(event) => {const session = course.sessions.find((item) => item.slug === event.target.value); if (session) void loadSession(session);}}>{course.sessions.map((session) => <option key={session.slug} value={session.slug}>{session.title}</option>)}</select>
-      {course.sessions.length > 1 && <nav className="session-pagination" aria-label="Navegación entre sesiones"><button disabled={sessionIndex <= 0} onClick={() => goToSession(sessionIndex - 1)} aria-label="Lección anterior">←</button><span>{sessionIndex + 1} / {course.sessions.length}</span><button disabled={sessionIndex >= course.sessions.length - 1} onClick={() => goToSession(sessionIndex + 1)} aria-label="Lección siguiente">→</button></nav>}
+      <select aria-label="Seleccionar lección" value={lesson.slug} onChange={(event) => navigate(event.target.value)}>{options.map((entry) => <option key={entry.slug} value={entry.slug} disabled={!entry.available}>{entry.number}. {entry.title}{entry.available ? '' : ' (próximamente)'}</option>)}</select>
+      {course.sessions.length > 1 && <nav className="session-pagination" aria-label="Navegación entre sesiones"><button disabled={sessionIndex <= 0} onClick={() => goToSession(sessionIndex - 1)} aria-label="Lección anterior">←</button><button disabled={sessionIndex >= course.sessions.length - 1} onClick={() => goToSession(sessionIndex + 1)} aria-label="Lección siguiente">→</button></nav>}
     </div>
-  </div></header>
+  </Bar>
     <main>
-      <p className="mobile-title">{titleLines.join(' ')}</p>
+      <a className="back-link" href="#/">← Contenidos</a>
+      <p className="mobile-title">{courseTitle}</p>
       <div className="lesson-layout">
       <aside className="parts" aria-label="Partes de la lección">
         <div className="parts-head"><span className="eyebrow">Parte {currentPart + 1} de {parts.length}</span><div className="parts-progress" role="progressbar" aria-valuemin={0} aria-valuemax={parts.length} aria-valuenow={doneCount} aria-label="Partes completadas"><i style={{width: `${(doneCount / parts.length) * 100}%`}}/></div></div>
