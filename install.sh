@@ -72,13 +72,14 @@ ensure_line() {
   [[ -f "$file" ]] && grep -Fqx "$line" "$file" && { echo "ok: $line in $file"; return; }
   if [[ $DRY_RUN == 1 ]]; then echo "append '$line' to $file"; else printf '%s\n' "$line" >> "$file"; fi
 }
-for skill in create-content produce-session voice publish-session; do
+for skill in create-content produce-session voice publish-session save-assets; do
   ensure_link "$SCRIPT_DIR/skills/$skill" "$HOST_ROOT/.agents/skills/$skill"
   ensure_link "$SCRIPT_DIR/skills/$skill" "$HOST_ROOT/.claude/skills/$skill"
 done
 migrate_legacy_cli
 ensure_link "$SCRIPT_DIR/dist/cli.js" "$HOST_ROOT/.autotorial/autotorial"
 ensure_link "$SCRIPT_DIR/run/deploy-pages.sh" "$HOST_ROOT/.autotorial/deploy-pages"
+ensure_link "$SCRIPT_DIR/run/save-assets.sh" "$HOST_ROOT/.autotorial/save-assets"
 ensure_line "/bin/" "$HOST_ROOT/.gitignore"
 
 if [[ -e "$HOST_ROOT/.github/workflows/autotorial-pages.yml" ]]; then

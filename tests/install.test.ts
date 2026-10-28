@@ -1,4 +1,4 @@
-import {mkdtemp, mkdir, readFile, readlink, writeFile, copyFile, chmod, symlink} from 'node:fs/promises';
+import {mkdtemp, mkdir, readFile, readlink, writeFile, copyFile, chmod, symlink, rm} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
@@ -23,6 +23,8 @@ describe('host integration scripts', () => {
     const deployLink = await readlink(path.join(host, '.autotorial', 'deploy-pages'));
     expect(path.isAbsolute(deployLink)).toBe(false);
     expect(deployLink).toContain('run/deploy-pages.sh');
+    expect(await readlink(path.join(host, '.autotorial', 'save-assets'))).toContain('run/save-assets.sh');
+    expect(await readlink(path.join(host, '.claude', 'skills', 'save-assets'))).toContain('skills/save-assets');
     expect(await readFile(path.join(host, '.gitignore'), 'utf8')).toBe('# host rules\n/bin/\n');
     expect(await readFile(path.join(host, '.github', 'workflows', 'checks.yml'), 'utf8')).toBe('name: Host checks\n');
     await expect(readFile(path.join(host, '.github', 'workflows', 'autotorial-pages.yml'), 'utf8')).rejects.toThrow();
@@ -89,5 +91,44 @@ describe('host integration scripts', () => {
     execFileSync('git', ['-C', frameworkCopy, '-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'commit', '-qm', 'fixture'], {stdio: 'pipe'});
     const output = execFileSync(path.join(frameworkCopy, 'update.sh'), ['v1.2.3', '--dry-run', '--host', host], {encoding: 'utf8'});
     expect(output).toContain('checkout --detach v1.2.3');
+  });
+
+  it('saves ignored assets in an orphan branch and restores them', async () => {
+    const remote = await mkdtemp(path.join(os.tmpdir(), 'autotorial-assets-remote-'));
+    execFileSync('git', ['init', '-q', '--bare', remote], {stdio: 'pipe'});
+    const repo = await mkdtemp(path.join(os.tmpdir(), 'autotorial-assets-repo-'));
+    const git = (...args: string[]) => execFileSync('git', ['-C', repo, ...args], {encoding: 'utf8'});
+    git('init', '-q', '-b', 'main');
+    git('config', 'user.email', 'test@example.com');
+    git('config', 'user.name', 'Test');
+    await mkdir(path.join(repo, 'run'), {recursive: true});
+    await copyFile(path.join(framework, 'run', 'save-assets.sh'), path.join(repo, 'run', 'save-assets.sh'));
+    await chmod(path.join(repo, 'run', 'save-assets.sh'), 0o755);
+    await writeFile(path.join(repo, '.gitignore'), '/bin/\n');
+    await writeFile(path.join(repo, 'README.md'), 'host\n');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'init');
+    git('remote', 'add', 'origin', remote);
+    const out = path.join(repo, 'bin', 'autotorial');
+    await mkdir(path.join(out, 'generated'), {recursive: true});
+    await mkdir(path.join(out, 'public', 'audio'), {recursive: true});
+    await mkdir(path.join(out, 'video'), {recursive: true});
+    await writeFile(path.join(out, 'generated', 'one.json'), JSON.stringify({slug: 'one', title: 'One', sourceHash: 'abc', producedAt: 'now', scenes: [{id: 'a'}], audio: [{src: 'audio/used.wav', provider: 'kokoro'}]}));
+    await writeFile(path.join(out, 'public', 'audio', 'used.wav'), 'used');
+    await writeFile(path.join(out, 'public', 'audio', 'stale.wav'), 'stale');
+    await writeFile(path.join(out, 'video', 'one.mp4'), 'video');
+
+    const script = path.join(repo, 'run', 'save-assets.sh');
+    expect(execFileSync(script, ['save'], {encoding: 'utf8'})).toContain('Pushed lessons');
+    expect(git('ls-tree', '-r', '--name-only', 'origin/lessons').split('\n').filter(Boolean).sort()).toEqual([
+      'README.md', 'autotorial/generated/one.json', 'autotorial/public/audio/used.wav', 'autotorial/video/one.mp4', 'manifest.json',
+    ]);
+    expect(execFileSync(script, ['save'], {encoding: 'utf8'})).toContain('nothing new');
+    expect(git('status', '--porcelain')).toBe('');
+
+    await rm(path.join(repo, 'bin'), {recursive: true, force: true});
+    execFileSync(script, ['restore'], {encoding: 'utf8'});
+    expect(await readFile(path.join(out, 'public', 'audio', 'used.wav'), 'utf8')).toBe('used');
+    expect(await readFile(path.join(out, 'video', 'one.mp4'), 'utf8')).toBe('video');
   });
 });

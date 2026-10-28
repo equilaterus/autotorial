@@ -16,7 +16,7 @@ npm run build --prefix lib/autotorial
 ./lib/autotorial/install.sh
 ```
 
-The installer detects the superproject, creates relative project-only skill links under `.agents/skills/` and `.claude/skills/`, links `.autotorial/autotorial` and `.autotorial/deploy-pages`, and adds `/bin/` to the host `.gitignore`. It never creates a GitHub Actions deployment workflow or replaces unrelated files. Running it again is safe. The installed commands use relative links to the conventional `lib/autotorial` submodule path.
+The installer detects the superproject, creates relative project-only skill links under `.agents/skills/` and `.claude/skills/`, links `.autotorial/autotorial`, `.autotorial/deploy-pages` and `.autotorial/save-assets`, and adds `/bin/` to the host `.gitignore`. It never creates a GitHub Actions deployment workflow or replaces unrelated files. Running it again is safe. The installed commands use relative links to the conventional `lib/autotorial` submodule path.
 
 Update to an already known tag/ref with `./lib/autotorial/update.sh <revision>`. The updater refuses dirty submodule/pointer state, fetches tags, checks out the exact commit, and reconciles links; it never commits or pushes. Inspect with `--dry-run` first.
 
@@ -89,3 +89,18 @@ The acceptance test copies the separate sample host to a temporary repository, v
 - The sandbox is intended for short educational snippets, not adversarial untrusted multi-tenant computation.
 - Kokoro/Piper model installation is external because models are large and platform-specific; espeak keeps the default workflow fully local and free when they are absent.
 - MP4 export needs Remotion's browser/runtime prerequisites and is not exercised by the default acceptance test. ElevenLabs network generation is intentionally not tested or called without user approval.
+
+## Save state
+
+The generated assets live in the ignored `bin/autotorial/`. To keep them (narration audio, produced lesson JSON and MP4) without paying for them again, snapshot them into the orphan branch `lessons`:
+
+```bash
+.autotorial/save-assets            # commit and push the snapshot
+.autotorial/save-assets --no-push  # commit locally only
+.autotorial/save-assets --no-video # leave the MP4 out
+.autotorial/save-assets status     # print the branch manifest
+.autotorial/save-assets restore    # bring the snapshot back into bin/autotorial
+```
+
+Only the audio that produced lessons use is saved. After a restore, `produce` reuses the saved narration and `publish` rebuilds the site. The branch is a backup, not a deployment. The `save-assets` skill wraps this command.
+
