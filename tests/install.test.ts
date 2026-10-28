@@ -130,5 +130,14 @@ describe('host integration scripts', () => {
     execFileSync(script, ['restore'], {encoding: 'utf8'});
     expect(await readFile(path.join(out, 'public', 'audio', 'used.wav'), 'utf8')).toBe('used');
     expect(await readFile(path.join(out, 'video', 'one.mp4'), 'utf8')).toBe('video');
+
+    // An unpushed save is not lost by the next one, and saves only add commits.
+    await writeFile(path.join(out, 'video', 'one.mp4'), 'video v2');
+    execFileSync(script, ['save', '--no-push'], {encoding: 'utf8'});
+    await writeFile(path.join(out, 'video', 'one.mp4'), 'video v3');
+    execFileSync(script, ['save'], {encoding: 'utf8'});
+    expect(git('rev-list', '--count', 'origin/lessons').trim()).toBe('3');
+    expect(git('show', 'origin/lessons~1:autotorial/video/one.mp4')).toBe('video v2');
+    expect(git('show', 'origin/lessons~2:autotorial/video/one.mp4')).toBe('video');
   });
 });

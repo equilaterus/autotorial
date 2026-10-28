@@ -33,14 +33,25 @@ done
 
 has_remote() { git -C "$repo_root" remote get-url origin >/dev/null 2>&1; }
 fetch_branch() { has_remote && git -C "$repo_root" fetch -q origin "$branch" 2>/dev/null || true; }
+# The newest copy of the branch: the local one when it is ahead of origin (unpushed saves), else origin's.
 snapshot_ref() {
-  if git -C "$repo_root" rev-parse --verify -q "refs/remotes/origin/$branch" >/dev/null; then echo "origin/$branch"
-  elif git -C "$repo_root" rev-parse --verify -q "refs/heads/$branch" >/dev/null; then echo "$branch"
+  local local_ok=false remote_ok=false
+  git -C "$repo_root" rev-parse --verify -q "refs/heads/$branch" >/dev/null && local_ok=true
+  git -C "$repo_root" rev-parse --verify -q "refs/remotes/origin/$branch" >/dev/null && remote_ok=true
+  if [[ $local_ok == true && $remote_ok == true ]]; then
+    if git -C "$repo_root" merge-base --is-ancestor "origin/$branch" "$branch"; then echo "$branch"; else echo "origin/$branch"; fi
+  elif [[ $remote_ok == true ]]; then echo "origin/$branch"
+  elif [[ $local_ok == true ]]; then echo "$branch"
   fi
 }
-
-stage=""
-wt=""
+# Saves only ever add commits. Refuse to continue if local and origin have diverged instead of dropping either side.
+ensure_not_diverged() {
+  if git -C "$repo_root" rev-parse --verify -q "refs/heads/$branch" >/dev/null && git -C "$repo_root" rev-parse --verify -q "refs/remotes/origin/$branch" >/dev/null \
+     && ! git -C "$repo_root" merge-base --is-ancestor "origin/$branch" "$branch" && ! git -C "$repo_root" merge-base --is-ancestor "$branch" "origin/$branch"; then
+    echo "Local $branch and origin/$branch have diverged. Reconcile them with git (merge or rebase) before saving; nothing was changed." >&2
+    exit 1
+  fi
+}
 
 save() {
   shopt -s nullglob
@@ -89,6 +100,7 @@ Restore it with `.autotorial/save-assets restore`, then run `produce` and `publi
 EOF
 
   fetch_branch
+  ensure_not_diverged
   local ref
   ref="$(snapshot_ref || true)"
   if [[ -n "$ref" ]]; then
