@@ -231,6 +231,58 @@ function PromptAnatomy({items, focus = -1}: {items: VisualItem[]; focus?: number
   </div>;
 }
 
+/** Model choice: two kinds of model side by side and the chat's model selector with the recommended one picked. */
+function ModelPicker({items, focus = 0}: {items: VisualItem[]; focus?: number}) {
+  const {show} = useStage();
+  return <div style={{display: 'grid', gridTemplateColumns: '1.35fr 1fr', gap: 34, alignItems: 'center'}}>
+    <div style={{display: 'grid', gap: 18}}>
+      {items.map((item, i) => {
+        const hot = i === focus;
+        return <div key={item.label} style={{...show(0.08 + i * 0.2), padding: '24px 28px', borderRadius: 18, background: hot ? '#2a2230' : c.panel, border: `${hot ? 3 : 1}px solid ${hot ? c.accent : c.border}`}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 16}}><span style={{fontSize: 48}}>{item.icon}</span><div style={{fontSize: 34, fontWeight: 600}}>{item.label}</div>{hot && <span style={{marginLeft: 'auto', whiteSpace: 'nowrap', padding: '5px 14px', borderRadius: 999, background: c.accent, color: '#201713', fontSize: 18, fontWeight: 700, letterSpacing: 1}}>PARA CONSTRUIR</span>}</div>
+          <div style={{fontSize: 28, color: c.soft, margin: '10px 0 12px'}}>{item.detail}</div>
+          <div style={{display: 'flex', gap: 12, flexWrap: 'wrap'}}>{item.steps?.map((tag) => <span key={tag} style={{padding: '4px 14px', borderRadius: 999, background: c.raised, border: `1px solid ${c.border}`, fontSize: 22}}>{tag}</span>)}</div>
+        </div>;
+      })}
+    </div>
+    <Window title="Chat del agente">
+      <div style={{padding: 22, minHeight: 360, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 14}}>
+        <div style={{...show(0.45), padding: 10, borderRadius: 12, background: c.raised, border: `1px solid ${c.border}`}}>
+          <div style={{fontSize: 18, color: c.muted, letterSpacing: 2, padding: '2px 8px 8px'}}>CAMBIAR MODELO</div>
+          {items.map((item, i) => <div key={item.label} style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, fontSize: 24, background: i === focus ? '#2a2230' : 'transparent', border: `1px solid ${i === focus ? c.accent : 'transparent'}`}}><span style={{width: 24, color: c.ok}}>{i === focus ? '✓' : ''}</span>{item.label}</div>)}
+        </div>
+        <div style={{display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', border: `1px solid ${c.border}`, borderRadius: 10, color: c.muted, fontSize: 21}}><span style={{flex: 1}}>Escribe tu mensaje…</span><span style={{padding: '4px 12px', borderRadius: 999, background: c.raised, color: c.text, border: `1px solid ${c.accent}`, fontSize: 20}}>{items[focus]?.label.split(' ·')[0]} ▾</span></div>
+      </div>
+    </Window>
+  </div>;
+}
+
+/** Where to see the plan usage in VS Code: the path, and an example of the Account & Usage window. */
+function UsagePanel({items, steps = []}: {items: VisualItem[]; steps?: string[]}) {
+  const {p, show} = useStage();
+  return <div style={{display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: 36, alignItems: 'center'}}>
+    <div style={{display: 'grid', gap: 12}}>
+      {steps.map((step, i) => <React.Fragment key={step}>
+        <div style={{...show(0.06 + i * 0.16), display: 'flex', alignItems: 'center', gap: 16, padding: '16px 22px', borderRadius: 14, background: i === steps.length - 1 ? '#2a2230' : c.panel, border: `${i === steps.length - 1 ? 2 : 1}px solid ${i === steps.length - 1 ? c.accent : c.border}`, fontSize: 28}}>
+          <span style={{display: 'grid', placeItems: 'center', width: 38, height: 38, borderRadius: '50%', background: c.accent, color: '#201713', fontWeight: 700, fontSize: 20}}>{i + 1}</span>{step}
+        </div>
+        {i < steps.length - 1 && <div style={{...show(0.1 + i * 0.16), textAlign: 'center', fontSize: 30, color: c.accent, lineHeight: 0.6}}>↓</div>}
+      </React.Fragment>)}
+    </div>
+    <div style={{...show(0.5), background: c.panel, border: `1px solid ${c.border}`, borderRadius: 16, overflow: 'hidden', boxShadow: '0 24px 70px #0007'}}>
+      <div style={{display: 'flex', justifyContent: 'space-between', padding: '14px 22px', background: c.raised, fontSize: 24}}><b>Account &amp; Usage</b><span style={{color: c.muted}}>✕</span></div>
+      <div style={{padding: '20px 24px', display: 'grid', gap: 22}}>
+        {items.map((item, i) => <div key={item.label}>
+          <div style={{display: 'flex', justifyContent: 'space-between', fontSize: 25}}><span>{item.label}</span><span style={{color: c.muted}}>{Math.round((item.value ?? 0) * Math.min(1, Math.max(0, (p - 0.5) / 0.3)))}% usado</span></div>
+          <div style={{height: 14, borderRadius: 99, background: '#1b3a63', margin: '8px 0 6px', overflow: 'hidden'}}><div style={{width: `${(item.value ?? 0) * Math.min(1, Math.max(0, (p - 0.5) / 0.3))}%`, height: '100%', background: (item.value ?? 0) > 80 ? '#e5534b' : c.ok}}/></div>
+          <div style={{fontSize: 20, color: c.muted}}>{item.detail}</div>
+        </div>)}
+        <div style={{fontSize: 18, color: c.muted}}>Valores de ejemplo</div>
+      </div>
+    </div>
+  </div>;
+}
+
 function Frontend({items, cards = []}: {items: VisualItem[]; cards?: VisualItem[]}) {
   const {show} = useStage();
   return <div style={{display: 'grid', gridTemplateColumns: '1.45fr 1fr', gap: 36, alignItems: 'center'}}>
@@ -439,6 +491,8 @@ export function VisualScene({scene, slug}: {scene: VisualSceneData; slug: string
     : scene.visual === 'open-chat' ? <OpenChat items={items}/>
     : scene.visual === 'browser-page' ? <BrowserPage items={items} steps={scene.steps}/>
     : scene.visual === 'prompt-anatomy' ? <PromptAnatomy items={items} focus={scene.focus}/>
+    : scene.visual === 'model-picker' ? <ModelPicker items={items} focus={scene.focus}/>
+    : scene.visual === 'usage-panel' ? <UsagePanel items={items} steps={scene.steps}/>
     : scene.visual === 'frontend' ? <Frontend items={items} cards={scene.cards}/>
     : scene.visual === 'backend' ? <Backend items={items} steps={scene.steps}/>
     : scene.visual === 'database' ? <Database items={items} steps={scene.steps}/>

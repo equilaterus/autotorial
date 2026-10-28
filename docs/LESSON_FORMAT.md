@@ -54,7 +54,7 @@ Narration of the next scene…
 
 Every `####` is a scene; the player plays them one after another in the same video, shows the narration of the scene that is playing, and gathers all the questions of the part below the video. A question counts for the part, so Continue stays disabled until all of them are answered. Exercises placed directly under the `###` heading (before the first `####`) belong to the part and follow its last scene. Scenes get `group` and `groupTitle` fields in the produced lesson; the sidebar lists parts, not scenes.
 
-Images live in `lessons/<slug>/assets/` and are copied to the site when the lesson is produced. Reference them by file name: a visual item takes `image`, and `cards` (`{label, detail, image}`) feeds the catalog shown by `app-preview` and `frontend`. `focus` (an item index) emphasizes one item in `prompt-anatomy`.
+Images live in `lessons/<slug>/assets/` and are copied to the site when the lesson is produced. Reference them by file name: a visual item takes `image`, and `cards` (`{label, detail, image}`) feeds the catalog shown by `app-preview` and `frontend`. `focus` (an item index) emphasizes one item in `prompt-anatomy` and `model-picker`; `value` (0-100) fills the meters of `usage-panel`.
 
 The older layout still works: one fenced `autotorial` JSON block with `scenes` and `exercises`, as below.
 

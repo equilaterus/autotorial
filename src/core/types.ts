@@ -49,9 +49,11 @@ export interface VisualItem {
   steps?: string[];
   /** File inside lessons/<slug>/assets/. */
   image?: string;
+  /** Percentage (0-100) for meters such as usage-panel. */
+  value?: number;
 }
 
-export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'prompt-anatomy' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices';
+export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'prompt-anatomy' | 'model-picker' | 'usage-panel' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices';
 
 export interface VisualScene extends BaseScene {
   type: 'visual';
