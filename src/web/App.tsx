@@ -105,6 +105,7 @@ export default function App() {
   if (error) return <main><h1>No se pudo cargar el curso</h1><pre>{error}</pre></main>;
   if (!course) return <main><p>Cargando…</p></main>;
   const courseTitle = course.title ?? (lesson?.courseTitle ?? 'Cursos').replace('\n', ' ');
+  document.title = courseTitle;
   if (!route) return <><Bar title={courseTitle}/><Home title={courseTitle} contents={course.contents ?? course.sessions.map((item, index) => ({number: index + 1, title: item.title, description: '', slug: item.slug, available: true}))}/><SiteFooter/></>;
   if (!lesson || lesson.slug !== route) return <><Bar title={courseTitle}/><main><p>Cargando la lección…</p></main><SiteFooter/></>;
   const parts = groupParts(lesson);

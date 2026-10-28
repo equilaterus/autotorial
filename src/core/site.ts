@@ -29,8 +29,12 @@ async function stampBuild(site: string): Promise<void> {
   await writeFile(path.join(site, 'version.json'), JSON.stringify({build}));
   const file = path.join(site, 'index.html');
   const guard = `<meta name="autotorial-build" content="${build}"><script>(function(){var m=document.querySelector('meta[name=autotorial-build]');if(!m)return;fetch('./version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){var k='autotorial-reloaded:'+v.build;if(v.build&&v.build!==m.content){try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1')}catch(e){return}location.reload()}}).catch(function(){})})()</script>`;
-  const html = await readFile(file, 'utf8');
-  await writeFile(file, html.replace('</head>', `${guard}</head>`));
+  let html = (await readFile(file, 'utf8')).replace('</head>', `${guard}</head>`);
+  try {
+    const course = JSON.parse(await readFile(path.join(site, 'course.json'), 'utf8')) as {title?: string};
+    if (course.title) html = html.replace(/<title>[^<]*<\/title>/, `<title>${course.title.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</title>`);
+  } catch { /* no course title: keep the default */ }
+  await writeFile(file, html);
 }
 
 export async function buildSite(frameworkRoot: string, hostRoot: string, base = './'): Promise<string> {
