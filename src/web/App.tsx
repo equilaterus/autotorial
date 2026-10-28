@@ -44,7 +44,7 @@ export default function App() {
   const questionsRef = useRef<HTMLDivElement>(null);
   const loadSession = (session: CourseSession) => {
     setError('');
-    return fetch(`./${session.href}`).then((item) => item.json()).then((value: ProducedLesson) => {
+    return fetch(`./${session.href}`, {cache: 'no-cache'}).then((item) => item.json()).then((value: ProducedLesson) => {
       const saved = Number(localStorage.getItem(`autotorial:${value.slug}:reached`)) || 0;
       const resume = Math.min(Math.max(0, saved), groupParts(value).length - 1);
       setLesson(value);
@@ -52,7 +52,7 @@ export default function App() {
       setCurrentPart(resume);
     }).catch((failure) => setError(String(failure)));
   };
-  useEffect(() => { fetch('./course.json').then((value) => value.json()).then((value: Course) => setCourse(value)).catch((failure) => setError(String(failure))); }, []);
+  useEffect(() => { fetch('./course.json', {cache: 'no-cache'}).then((value) => value.json()).then((value: Course) => setCourse(value)).catch((failure) => setError(String(failure))); }, []);
   useEffect(() => {
     const onHash = () => { setRoute(readRoute()); window.scrollTo(0, 0); };
     window.addEventListener('hashchange', onHash);
