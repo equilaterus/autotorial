@@ -64,6 +64,8 @@ export interface VisualScene extends BaseScene {
   /** Index of the item to emphasize. */
   focus?: number;
   steps?: string[];
+  /** Render items without card background or border (opt-in; supported by timeline and backend). */
+  plain?: boolean;
 }
 
 export type LessonScene = ConceptScene | CodeScene | DiagramScene | TerminalScene | VisualScene;

@@ -20,12 +20,12 @@ function useStage() {
 const Title = ({children}: {children: React.ReactNode}) => <h1 style={{fontWeight: 500, letterSpacing: '-.035em', fontSize: 50, margin: '0 0 28px'}}>{children}</h1>;
 const spread = (n: number, from = 0.08, to = 0.8) => (i: number) => from + (n <= 1 ? 0 : (i / (n - 1)) * (to - from));
 
-function Timeline({items}: {items: VisualItem[]}) {
+function Timeline({items, plain}: {items: VisualItem[]; plain?: boolean}) {
   const {show} = useStage();
   const at = spread(items.length);
   return <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 22, marginTop: 30}}>
     {items.map((item, i) => <React.Fragment key={item.label}>
-      <div style={{...show(at(i)), width: 230, textAlign: 'center', padding: '34px 16px', borderRadius: 18, background: c.panel, border: `1px solid ${i === items.length - 1 ? c.accent : c.border}`}}>
+      <div style={{...show(at(i)), width: 230, textAlign: 'center', padding: '34px 16px', ...(plain ? {} : {borderRadius: 18, background: c.panel, border: `1px solid ${i === items.length - 1 ? c.accent : c.border}`})}}>
         <div style={{fontSize: 84}}>{item.icon}</div>
         <div style={{fontSize: 27, marginTop: 14, lineHeight: 1.25}}>{item.label}</div>
         {item.detail && <div style={{fontSize: 19, color: c.muted, marginTop: 8}}>{item.detail}</div>}
@@ -314,7 +314,7 @@ function Frontend({items, cards = []}: {items: VisualItem[]; cards?: VisualItem[
 }
 
 /** Backend: requests come in, the server receives, validates and executes. */
-function Backend({items, steps = []}: {items: VisualItem[]; steps?: string[]}) {
+function Backend({items, steps = [], plain}: {items: VisualItem[]; steps?: string[]; plain?: boolean}) {
   const {p, show} = useStage();
   const active = Math.min(items.length - 1, Math.floor(interpolate(p, [0.3, 0.9], [0, items.length], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})));
   return <div style={{display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 40, alignItems: 'center'}}>
@@ -326,7 +326,7 @@ function Backend({items, steps = []}: {items: VisualItem[]; steps?: string[]}) {
     </div>
     <div style={{padding: 28, borderRadius: 20, background: c.panel, border: `2px solid ${c.accent}`}}>
       <div style={{display: 'flex', gap: 14, alignItems: 'center', marginBottom: 18}}><span style={{fontSize: 52}}>⚙️</span><div><Tag>BACKEND</Tag><div style={{fontSize: 24, color: c.muted, marginTop: 6}}>El servidor · ASP.NET Core</div></div></div>
-      {items.map((item, i) => <div key={item.label} style={{display: 'flex', gap: 16, alignItems: 'center', marginTop: 10, padding: '14px 18px', borderRadius: 12, background: i <= active && p > 0.3 ? '#28211e' : c.raised, border: `1px solid ${i <= active && p > 0.3 ? c.accent : c.border}`, fontSize: 28}}>
+      {items.map((item, i) => <div key={item.label} style={{display: 'flex', gap: 16, alignItems: 'center', marginTop: 10, padding: '14px 18px', fontSize: 28, ...(plain ? {} : {borderRadius: 12, background: i <= active && p > 0.3 ? '#28211e' : c.raised, border: `1px solid ${i <= active && p > 0.3 ? c.accent : c.border}`})}}>
         <span style={{display: 'grid', placeItems: 'center', width: 40, height: 40, borderRadius: '50%', background: i <= active && p > 0.3 ? c.ok : c.border, color: '#10100f', fontWeight: 700}}>{i <= active && p > 0.3 ? '✓' : i + 1}</span>
         <div><div style={{fontWeight: 600}}>{item.label}</div><div style={{fontSize: 20, color: c.muted}}>{item.detail}</div></div>
       </div>)}
@@ -483,7 +483,7 @@ function Choices({items}: {items: VisualItem[]}) {
 
 export function VisualScene({scene, slug}: {scene: VisualSceneData; slug: string}) {
   const items = scene.items ?? [];
-  const body = scene.visual === 'timeline' ? <Timeline items={items}/>
+  const body = scene.visual === 'timeline' ? <Timeline items={items} plain={scene.plain}/>
     : scene.visual === 'browser-download' ? <BrowserDownload items={items}/>
     : scene.visual === 'installer' ? <Installer items={items}/>
     : scene.visual === 'extensions' ? <Extensions items={items}/>
@@ -494,7 +494,7 @@ export function VisualScene({scene, slug}: {scene: VisualSceneData; slug: string
     : scene.visual === 'model-picker' ? <ModelPicker items={items} focus={scene.focus}/>
     : scene.visual === 'usage-panel' ? <UsagePanel items={items} steps={scene.steps}/>
     : scene.visual === 'frontend' ? <Frontend items={items} cards={scene.cards}/>
-    : scene.visual === 'backend' ? <Backend items={items} steps={scene.steps}/>
+    : scene.visual === 'backend' ? <Backend items={items} steps={scene.steps} plain={scene.plain}/>
     : scene.visual === 'database' ? <Database items={items} steps={scene.steps}/>
     : scene.visual === 'docker' ? <Docker items={items} steps={scene.steps}/>
     : scene.visual === 'agent-work' ? <AgentWork steps={scene.steps}/>
