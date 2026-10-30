@@ -48,6 +48,8 @@ If Piper lives in an isolated environment rather than on `PATH`, set `PIPER_BIN=
 
 The voice verified for the published Spanish samples is Piper 1.8.0 with `es_MX-claude-high`. See the exact working installation, model-download, and production commands in [Voice setup](docs/VOICES.md).
 
+**Recommendation:** always pass the voice explicitly (for example `--voice kokoro --speaker em_alex`) and use the same one for every session of a course. Omitting it falls back to the CLI default (`ef_dora` for Kokoro), so a session produced without flags sounds different from the earlier ones. After choosing a voice, re-producing an existing session with the same flags should report `0 generated, N cached`; if it generates audio, the voice differs.
+
 Provider, voice, model, and text are part of every cache key, so one changed segment does not regenerate the rest. Kokoro CLI packaging is not standardized; this MVP expects `kokoro --voice <voice> --output <file> [--model <path>] <text>`. Piper uses its standard stdin interface.
 
 ElevenLabs is optional. Keep the key only in `ELEVENLABS_API_KEY`. The first command intentionally fails after displaying provider/model/voice, new and cached segments, characters/estimated credits, cost availability, and an exact manifest hash. Only an explicit rerun with `--approve-manifest <hash>` authorizes that unchanged batch. CI cannot preapprove future batches.
