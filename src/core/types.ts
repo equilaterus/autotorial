@@ -23,6 +23,8 @@ export interface CodeScene extends BaseScene {
   language?: string;
   reveal?: number[];
   highlights?: number[];
+  /** Highlighted lines that change in order, spread evenly over the scene while it is narrated. */
+  focus?: number[][];
 }
 
 export interface DiagramNode {
@@ -53,7 +55,7 @@ export interface VisualItem {
   value?: number;
 }
 
-export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'prompt-anatomy' | 'model-picker' | 'usage-panel' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices' | 'swagger-mock' | 'task-board';
+export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'prompt-anatomy' | 'model-picker' | 'usage-panel' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices' | 'swagger-mock' | 'task-board' | 'url-anatomy' | 'request-flow' | 'memory-list';
 
 export interface VisualScene extends BaseScene {
   type: 'visual';

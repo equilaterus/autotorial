@@ -82,9 +82,9 @@ function exactManifest(provider: string, model: string, voice: string, requests:
   return createHash('sha256').update(JSON.stringify({provider, model, voice, segments: requests.map(({sceneId, text, cacheKey}) => ({sceneId, text, cacheKey}))})).digest('hex');
 }
 
-/** Text sent to the voice: the on-screen narration with acronyms the engines spell out written so they are read as words ("API" -> "api"). */
+/** Text sent to the voice: the on-screen narration with acronyms the engines spell out written so they are read as words ("API" -> "api", "RESTful" -> "restful"). */
 export function spokenText(narration: string): string {
-  return narration.replace(/\bAPI(s?)\b/g, 'api$1');
+  return narration.replace(/\bAPI(s?)\b/g, 'api$1').replace(/\bRESTful\b/g, 'restful');
 }
 
 async function generateLocal(provider: string, request: SegmentRequest, voice: string, model: string): Promise<void> {

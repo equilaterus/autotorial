@@ -501,6 +501,80 @@ function TaskBoard({items}: {items: VisualItem[]}) {
   </div>;
 }
 
+/** URL anatomy: a browser bar whose parts (protocol, server, resource) are highlighted one after another. items = parts (label, detail); steps[0] = note under the protocol. */
+function UrlAnatomy({items, steps = []}: {items: VisualItem[]; steps?: string[]}) {
+  const {p, show} = useStage();
+  const active = Math.min(items.length - 1, Math.floor(clamp01(p, 0.12, 0.92) * items.length));
+  return <Window title="Navegador">
+    <div style={{padding: '16px 24px', background: c.raised}}>
+      <div style={{display: 'flex', alignItems: 'center', padding: '12px 22px', borderRadius: 999, background: c.code, fontFamily: mono, fontSize: 34, border: `1px solid ${c.border}`}}>
+        <span style={{color: c.muted, fontSize: 24, marginRight: 14}}>🔒</span>
+        {items.map((item, i) => <span key={item.label} style={{color: p > 0.12 && i === active ? c.accent : c.text, background: p > 0.12 && i === active ? '#d9775722' : 'transparent', borderBottom: `3px solid ${p > 0.12 && i <= active ? c.accent : 'transparent'}`, padding: '2px 4px'}}>{item.label}</span>)}
+      </div>
+    </div>
+    <div style={{display: 'grid', gridTemplateColumns: `repeat(${items.length}, 1fr)`, gap: 20, padding: '34px 40px', background: '#1a1a1d', minHeight: 250}}>
+      {items.map((item, i) => <div key={item.label} style={{...show(0.14 + i * 0.28), textAlign: 'center', opacity: p > 0.12 && i > active ? 0.3 : 1}}>
+        <div style={{fontSize: 56}}>{item.icon}</div>
+        <div style={{fontSize: 30, marginTop: 8, color: i === active && p > 0.12 ? c.accent : c.text}}>{item.detail}</div>
+        {i === 0 && steps[0] && <div style={{fontSize: 22, color: c.muted, marginTop: 10}}>{steps[0]}</div>}
+      </div>)}
+    </div>
+  </Window>;
+}
+
+/** Request flow: the request travels frontend -> backend -> database and the response comes back. items = 3 nodes; steps = captions for the 5 phases. */
+function RequestFlow({items, steps = []}: {items: VisualItem[]; steps?: string[]}) {
+  const {p, show} = useStage();
+  const phase = Math.min(4, Math.floor(clamp01(p, 0.08, 0.95) * 5));
+  const started = p > 0.08;
+  const lit = (i: number) => started && phase >= i;
+  const arrow = (on: boolean, text: string, back: boolean) => <div style={{textAlign: 'center', opacity: on ? 1 : 0.22, color: on ? c.accent : c.muted}}>
+    <div style={{fontSize: 22, minHeight: 28}}>{text}</div>
+    <div style={{fontSize: 46, lineHeight: 1}}>{back ? '←' : '→'}</div>
+  </div>;
+  const topLabels = ['Petición HTTP', 'Consulta'], bottomLabels = ['Respuesta HTTP', 'Datos'];
+  const active = [[0, 1], [1, 2], [1, 2], [0, 1], [0]][phase];
+  return <div style={{marginTop: 20}}>
+    <div style={{display: 'grid', gridTemplateColumns: '1fr 170px 1fr 170px 1fr', alignItems: 'center', gap: 6}}>
+      {items.map((item, i) => {
+        const on = started && active.includes(i);
+        return <React.Fragment key={item.label}>
+          <div style={{...show(0.02 + i * 0.03), textAlign: 'center', padding: '18px 8px', borderRadius: 16, background: on ? '#28211e' : c.panel, border: `1px solid ${on ? c.accent : c.border}`}}>
+            <div style={{fontSize: 70}}>{item.icon}</div>
+            <div style={{fontSize: 28, marginTop: 6}}>{item.label}</div>
+            {item.detail && <div style={{fontSize: 18, color: c.muted, marginTop: 4}}>{item.detail}</div>}
+          </div>
+          {i < items.length - 1 && <div style={{display: 'grid', gap: 14}}>
+            {arrow(lit(i), topLabels[i], false)}
+            {arrow(lit(i === 0 ? 3 : 2), bottomLabels[i], true)}
+          </div>}
+        </React.Fragment>;
+      })}
+    </div>
+    <div style={{marginTop: 34, textAlign: 'center', fontSize: 32, color: c.soft, minHeight: 44}}>{started ? steps[phase] : ''}</div>
+  </div>;
+}
+
+/** Memory list: a sequence of requests (label, detail) and the in-memory list after each one (steps). The last item usually restarts the app. */
+function MemoryList({items}: {items: VisualItem[]}) {
+  const {p, show} = useStage();
+  const active = Math.min(items.length - 1, Math.floor(clamp01(p, 0.06, 0.96) * items.length));
+  const list = items[active]?.steps ?? [];
+  const reset = items[active]?.icon === '🔄';
+  return <div style={{display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 34, alignItems: 'start', marginTop: 6}}>
+    <div style={{display: 'grid', gap: 10}}>
+      {items.map((item, i) => <div key={item.label} style={{...show(0.03 + i * 0.03), display: 'flex', alignItems: 'center', gap: 14, padding: '12px 18px', borderRadius: 12, background: i === active ? '#28211e' : c.panel, border: `1px solid ${i === active ? c.accent : c.border}`, opacity: i > active ? 0.35 : 1}}>
+        <span style={{fontSize: 28}}>{i < active ? '✓' : item.icon}</span>
+        <div><div style={{fontFamily: mono, fontSize: 23}}>{item.label}</div><div style={{fontSize: 19, color: c.muted}}>{item.detail}</div></div>
+      </div>)}
+    </div>
+    <div style={{padding: 22, borderRadius: 16, background: c.panel, border: `2px solid ${reset ? c.ok : c.accent}`, minHeight: 250}}>
+      <div style={{fontSize: 20, color: c.muted, letterSpacing: 2, marginBottom: 14}}>LISTA EN MEMORIA</div>
+      {list.length ? list.map((name) => <div key={name} style={{padding: '10px 16px', marginBottom: 10, borderRadius: 10, background: c.raised, border: `1px solid ${c.border}`, fontFamily: mono, fontSize: 26}}>"{name}"</div>) : <div style={{fontFamily: mono, fontSize: 26, color: c.muted}}>(vacía)</div>}
+    </div>
+  </div>;
+}
+
 /** Swagger UI look-alike (light theme, real method colors). A visual simulation, not a live request. */
 const SWAGGER_COLORS: Record<string, string> = {GET: '#61affe', POST: '#49cc90', PUT: '#fca130', DELETE: '#f93e3e'};
 const SWAGGER_STATUS: Record<number, string> = {200: 'OK', 201: 'Created', 204: 'No Content', 404: 'Not Found'};
@@ -655,6 +729,9 @@ export function VisualScene({scene, slug}: {scene: VisualSceneData; slug: string
     : scene.visual === 'prompt-flow' ? <PromptFlow items={items}/>
     : scene.visual === 'swagger-mock' ? <SwaggerMock scene={scene}/>
     : scene.visual === 'task-board' ? <TaskBoard items={items}/>
+    : scene.visual === 'url-anatomy' ? <UrlAnatomy items={items} steps={scene.steps}/>
+    : scene.visual === 'request-flow' ? <RequestFlow items={items} steps={scene.steps}/>
+    : scene.visual === 'memory-list' ? <MemoryList items={items}/>
     : <Choices items={items}/>;
   return <AbsoluteFill style={{fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif', color: c.text, background: c.bg, padding: '46px 70px', justifyContent: 'center'}}><Title>{scene.title}</Title><CoverContext.Provider value={slug}>{body}</CoverContext.Provider></AbsoluteFill>;
 }
