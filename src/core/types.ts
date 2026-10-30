@@ -53,7 +53,7 @@ export interface VisualItem {
   value?: number;
 }
 
-export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'prompt-anatomy' | 'model-picker' | 'usage-panel' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices' | 'swagger-mock';
+export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'prompt-anatomy' | 'model-picker' | 'usage-panel' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices' | 'swagger-mock' | 'task-board';
 
 export interface VisualScene extends BaseScene {
   type: 'visual';

@@ -481,6 +481,26 @@ function Choices({items}: {items: VisualItem[]}) {
   </div>;
 }
 
+/** Task board: one column per state (label = column title, detail = state name, steps = its tasks). The first task of the first column moves to the next states. */
+function TaskBoard({items}: {items: VisualItem[]}) {
+  const {p, show} = useStage();
+  const moving = items[0]?.steps?.[0];
+  const col = p > 0.74 ? 2 : p > 0.52 ? 1 : 0;
+  return <div style={{display: 'grid', gridTemplateColumns: `repeat(${items.length}, 1fr)`, gap: 22, marginTop: 8}}>
+    {items.map((item, i) => {
+      const tasks = (item.steps ?? []).filter((task) => task !== moving);
+      const here = moving && col === Math.min(i, 2) && i < 3 ? [moving] : [];
+      return <div key={item.label} style={{...show(0.04 + i * 0.07), padding: 18, borderRadius: 16, background: c.panel, border: `1px solid ${c.border}`, minHeight: 330}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16}}>
+          <span style={{fontSize: 38}}>{item.icon}</span>
+          <div><div style={{fontSize: 30, fontWeight: 600}}>{item.label}</div><div style={{fontSize: 18, color: c.muted, fontFamily: mono}}>{item.detail}</div></div>
+        </div>
+        {[...(i === 0 ? [] : []), ...here, ...tasks].map((task) => <div key={task} style={{padding: '14px 16px', marginBottom: 12, borderRadius: 10, background: task === moving ? '#28211e' : c.raised, border: `1px solid ${task === moving ? c.accent : c.border}`, fontSize: 24}}>{task}</div>)}
+      </div>;
+    })}
+  </div>;
+}
+
 /** Swagger UI look-alike (light theme, real method colors). A visual simulation, not a live request. */
 const SWAGGER_COLORS: Record<string, string> = {GET: '#61affe', POST: '#49cc90', PUT: '#fca130', DELETE: '#f93e3e'};
 const SWAGGER_STATUS: Record<number, string> = {200: 'OK', 201: 'Created', 204: 'No Content', 404: 'Not Found'};
@@ -525,7 +545,7 @@ function SwaggerMock({scene}: {scene: VisualSceneData}) {
   const {p, show} = useStage();
   const stage = scene.stage ?? 'overview';
   const ops = scene.operations ?? [];
-  const title = stage === 'overview' || stage === 'method-map' ? (scene.header ?? 'Todo API') : 'Todo API';
+  const title = stage === 'overview' || stage === 'method-map' ? (scene.header ?? 'API de Tareas') : 'API de Tareas';
   const url = scene.header?.startsWith('http') ? scene.header : 'http://localhost:5080/swagger';
   const active = ops.length ? Math.min(ops.length - 1, Math.floor(clamp01(p, 0.15, 0.9) * ops.length)) : 0;
 
@@ -634,6 +654,7 @@ export function VisualScene({scene, slug}: {scene: VisualSceneData; slug: string
     : scene.visual === 'app-preview' ? <AppPreview items={items} cards={scene.cards} checks={scene.steps}/>
     : scene.visual === 'prompt-flow' ? <PromptFlow items={items}/>
     : scene.visual === 'swagger-mock' ? <SwaggerMock scene={scene}/>
+    : scene.visual === 'task-board' ? <TaskBoard items={items}/>
     : <Choices items={items}/>;
   return <AbsoluteFill style={{fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif', color: c.text, background: c.bg, padding: '46px 70px', justifyContent: 'center'}}><Title>{scene.title}</Title><CoverContext.Provider value={slug}>{body}</CoverContext.Provider></AbsoluteFill>;
 }

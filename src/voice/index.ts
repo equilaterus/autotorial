@@ -82,6 +82,11 @@ function exactManifest(provider: string, model: string, voice: string, requests:
   return createHash('sha256').update(JSON.stringify({provider, model, voice, segments: requests.map(({sceneId, text, cacheKey}) => ({sceneId, text, cacheKey}))})).digest('hex');
 }
 
+/** Text sent to the voice: the on-screen narration with acronyms the engines spell out written so they are read as words ("API" -> "api"). */
+export function spokenText(narration: string): string {
+  return narration.replace(/\bAPI(s?)\b/g, 'api$1');
+}
+
 async function generateLocal(provider: string, request: SegmentRequest, voice: string, model: string): Promise<void> {
   if (provider === 'espeak') {
     const command = hasCommand('espeak-ng') ? 'espeak-ng' : 'espeak';
@@ -121,8 +126,9 @@ export async function generateNarration(scenes: LessonScene[], publicDir: string
   await mkdir(audioDir, {recursive: true});
   const extension = provider === 'elevenlabs' ? 'mp3' : 'wav';
   const requests: SegmentRequest[] = scenes.map((scene) => {
-    const cacheKey = createHash('sha256').update(JSON.stringify({text: scene.narration, provider, voice, model})).digest('hex');
-    return {sceneId: scene.id, text: scene.narration, cacheKey, extension, output: path.join(audioDir, `${cacheKey}.${extension}`)};
+    const text = spokenText(scene.narration);
+    const cacheKey = createHash('sha256').update(JSON.stringify({text, provider, voice, model})).digest('hex');
+    return {sceneId: scene.id, text, cacheKey, extension, output: path.join(audioDir, `${cacheKey}.${extension}`)};
   });
   const uncached: SegmentRequest[] = [];
   for (const request of requests) if (!await exists(request.output)) uncached.push(request);
