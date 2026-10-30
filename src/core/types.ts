@@ -23,6 +23,8 @@ export interface CodeScene extends BaseScene {
   language?: string;
   reveal?: number[];
   highlights?: number[];
+  /** Show the code in two columns, the first one with this many lines. */
+  split?: number;
   /** Highlighted lines that change in order, spread evenly over the scene while it is narrated. */
   focus?: Array<number[] | {lines: number[]; at?: string}>;
 }
@@ -57,7 +59,7 @@ export interface VisualItem {
   at?: string;
 }
 
-export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'prompt-anatomy' | 'model-picker' | 'usage-panel' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices' | 'swagger-mock' | 'task-board' | 'url-anatomy' | 'request-flow' | 'memory-list';
+export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'prompt-anatomy' | 'model-picker' | 'usage-panel' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices' | 'swagger-mock' | 'task-board' | 'url-anatomy' | 'request-flow' | 'memory-list' | 'vscode' | 'async-lanes';
 
 export interface VisualScene extends BaseScene {
   type: 'visual';
@@ -70,7 +72,9 @@ export interface VisualScene extends BaseScene {
   steps?: string[];
   /** Render items without card background or border (opt-in; supported by timeline and backend). */
   plain?: boolean;
-  /** Narration phrases at which each step (request-flow) becomes active. */
+  /** vscode: the file shown in the editor (code), with items as the explorer tree (value = depth, focus = open file). */
+  code?: string;
+  /** Narration phrases at which each step (request-flow, vscode) becomes active. */
   stepAt?: string[];
   /** swagger-mock: which Swagger view to draw. */
   stage?: 'overview' | 'method-map' | 'request-response' | 'hands-on';

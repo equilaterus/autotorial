@@ -136,7 +136,7 @@ export function validateLesson(lesson: LessonDefinition): ValidationIssue[] {
     if (!isText(scene.narration)) error(`${base}.narration`, 'is required');
     if (scene.type === 'code' && !isText(scene.code)) error(`${base}.code`, 'is required');
     if (scene.type === 'diagram' && (!scene.nodes?.length || !Array.isArray(scene.edges))) error(base, 'diagram requires nodes and edges');
-    if (scene.type === 'visual' && !['timeline', 'browser-download', 'installer', 'extensions', 'open-folder', 'open-chat', 'agent-work', 'browser-page', 'prompt-anatomy', 'model-picker', 'usage-panel', 'frontend', 'backend', 'database', 'docker', 'app-preview', 'prompt-flow', 'choices', 'swagger-mock', 'task-board', 'url-anatomy', 'request-flow', 'memory-list'].includes(scene.visual)) error(`${base}.visual`, 'is invalid');
+    if (scene.type === 'visual' && !['timeline', 'browser-download', 'installer', 'extensions', 'open-folder', 'open-chat', 'agent-work', 'browser-page', 'prompt-anatomy', 'model-picker', 'usage-panel', 'frontend', 'backend', 'database', 'docker', 'app-preview', 'prompt-flow', 'choices', 'swagger-mock', 'task-board', 'url-anatomy', 'request-flow', 'memory-list', 'vscode', 'async-lanes'].includes(scene.visual)) error(`${base}.visual`, 'is invalid');
     if (scene.type === 'code') for (const entry of scene.focus ?? []) {
       const at = Array.isArray(entry) ? undefined : entry.at;
       if (at && !scene.narration.includes(at)) error(`${base}.focus`, `"${at}" is not part of the narration`);

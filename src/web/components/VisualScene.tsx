@@ -2,6 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {VisualItem, VisualScene as VisualSceneData} from '../../core/types';
 import {currentPhase, phraseStarts} from './sync';
+import {csharpSpans, VSCODE_THEME} from './csharp';
 
 const c = {bg: '#141413', panel: '#242421', raised: '#2c2c28', text: '#f0eee6', muted: '#a8a79f', border: '#3a3a36', accent: '#d97757', soft: '#e8a78f', code: '#10100f', ok: '#a8c49a', blue: '#4a90d9'};
 const mono = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
@@ -528,16 +529,16 @@ function UrlAnatomy({items, steps = [], narration}: {items: VisualItem[]; steps?
       {items.map((item, i) => <div key={item.label} style={{textAlign: 'center', opacity: started ? (i > active ? 0.3 : 1) : 1}}>
         <div style={{fontSize: 56}}>{item.icon}</div>
         <div style={{fontSize: 30, marginTop: 8, color: i === active && started ? c.accent : c.text}}>{item.detail}</div>
-        {i === 0 && steps[0] && <div style={{fontSize: 22, color: c.muted, marginTop: 10}}>{steps[0]}</div>}
+        {steps[i] && <div style={{fontSize: 22, color: c.muted, marginTop: 10}}>{steps[i]}</div>}
       </div>)}
     </div>
   </Window>;
 }
 
 /** Request flow: the request travels frontend -> backend -> database and the response comes back. items = 3 nodes; steps = captions for the 5 phases. */
-function RequestFlow({items, steps = [], stepAt, narration}: {items: VisualItem[]; steps?: string[]; stepAt?: string[]; narration?: string}) {
+function RequestFlow({items, steps = [], stepAt, cards, narration}: {items: VisualItem[]; steps?: string[]; stepAt?: string[]; cards?: VisualItem[]; narration?: string}) {
   const {show} = useStage();
-  const raw = useSyncedIndex(narration, stepAt ?? [], 5, 0.08, 0.95);
+  const raw = useSyncedIndex(narration, stepAt ?? [], Math.max(5, steps.length), 0.08, 0.95);
   const started = raw >= 0;
   const phase = Math.max(0, raw);
   const lit = (i: number) => started && phase >= i;
@@ -546,7 +547,7 @@ function RequestFlow({items, steps = [], stepAt, narration}: {items: VisualItem[
     <div style={{fontSize: 46, lineHeight: 1}}>{back ? '←' : '→'}</div>
   </div>;
   const topLabels = ['Petición HTTP', 'Consulta'], bottomLabels = ['Respuesta HTTP', 'Datos'];
-  const active = [[0, 1], [1, 2], [1, 2], [0, 1], [0]][phase];
+  const active = [[0, 1], [1, 2], [1, 2], [0, 1], [0], [1]][phase] ?? [];
   return <div style={{marginTop: 20}}>
     <div style={{display: 'grid', gridTemplateColumns: '1fr 170px 1fr 170px 1fr', alignItems: 'center', gap: 6}}>
       {items.map((item, i) => {
@@ -564,6 +565,12 @@ function RequestFlow({items, steps = [], stepAt, narration}: {items: VisualItem[
         </React.Fragment>;
       })}
     </div>
+    {phase >= 5 && cards && <div style={{display: 'grid', gridTemplateColumns: '1fr 170px 1fr 170px 1fr', marginTop: 18}}>
+      <div/><div/>
+      <div style={{...show(0.7), display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center'}}>
+        {cards.map((card) => <span key={card.label} style={{padding: '8px 16px', borderRadius: 10, background: '#28211e', border: `1px solid ${c.accent}`, fontSize: 24}}>{card.icon} {card.label}</span>)}
+      </div>
+    </div>}
     <div style={{marginTop: 34, textAlign: 'center', fontSize: 32, color: c.soft, minHeight: 44}}>{started ? steps[phase] : ''}</div>
   </div>;
 }
@@ -585,6 +592,89 @@ function MemoryList({items, narration}: {items: VisualItem[]; narration?: string
       <div style={{fontSize: 20, color: c.muted, letterSpacing: 2, marginBottom: 14}}>LISTA EN MEMORIA</div>
       {list.length ? list.map((name) => <div key={name} style={{padding: '10px 16px', marginBottom: 10, borderRadius: 10, background: c.raised, border: `1px solid ${c.border}`, fontFamily: mono, fontSize: 26}}>"{name}"</div>) : <div style={{fontFamily: mono, fontSize: 26, color: c.muted}}>(vacía)</div>}
     </div>
+  </div>;
+}
+
+/** VS Code look-alike: explorer tree (items; value = depth), the open file's tab and its code. stepAt = phrases that emphasize explorer, tab and editor. */
+function CodeEditorScene({scene}: {scene: VisualSceneData}) {
+  const {show} = useStage();
+  const items = scene.items ?? [];
+  const open = scene.focus ?? 0;
+  const file = items[open]?.label ?? 'Archivo.cs';
+  const lines = (scene.code ?? '').split('\n');
+  const phase = useSyncedIndex(scene.narration, scene.stepAt ?? [], 3, 0.1, 0.9);
+  const ring = (region: number): React.CSSProperties => phase === region ? {boxShadow: `inset 0 0 0 2px ${c.accent}`} : {};
+  const sans = 'Segoe UI, system-ui, sans-serif';
+  return <div style={{borderRadius: 12, overflow: 'hidden', background: '#1e1e1e', boxShadow: '0 24px 70px #0007', fontFamily: sans, color: '#cccccc'}}>
+    <div style={{display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: '#3c3c3c'}}>
+      {['#ef6b5f', '#e5c06a', '#7bc67e'].map((color) => <span key={color} style={{width: 12, height: 12, borderRadius: '50%', background: color}}/>)}
+      <span style={{flex: 1, textAlign: 'center', fontSize: 16}}>{file} — {scene.header ?? 'Proyecto'} — Visual Studio Code</span>
+    </div>
+    <div style={{display: 'flex', minHeight: 400}}>
+      <div style={{width: 46, background: '#333333', display: 'grid', alignContent: 'start', justifyItems: 'center', gap: 16, paddingTop: 14, fontSize: 22}}><span>📄</span><span style={{opacity: 0.5}}>🔍</span><span style={{opacity: 0.5}}>🧩</span></div>
+      <div style={{width: 300, background: '#252526', padding: '10px 0', ...ring(0)}}>
+        <div style={{fontSize: 13, letterSpacing: 1, padding: '0 16px 8px', color: '#bbbbbb'}}>EXPLORADOR</div>
+        {items.map((item, i) => <div key={`${item.label}${i}`} style={{...show(0.02 + i * 0.015), display: 'flex', alignItems: 'center', gap: 8, padding: `4px 12px 4px ${14 + (item.value ?? 0) * 18}px`, fontSize: 18, background: i === open ? '#37373d' : 'transparent', color: i === open ? '#ffffff' : '#cccccc'}}>
+          <span style={{fontSize: 15}}>{item.icon}</span>{item.label}
+        </div>)}
+      </div>
+      <div style={{flex: 1, minWidth: 0, background: '#1e1e1e'}}>
+        <div style={{display: 'flex', background: '#252526', ...ring(1)}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', background: '#1e1e1e', borderTop: '2px solid #007acc', fontSize: 17, color: '#ffffff'}}><span style={{color: '#5db85c', fontWeight: 700}}>#</span>{file}</div>
+        </div>
+        <div style={{padding: '10px 0', ...ring(2)}}>
+          <pre style={{margin: 0, fontFamily: mono, fontSize: 20, lineHeight: '30px', color: VSCODE_THEME.plain}}>
+            {lines.map((line, i) => <div key={i} style={{display: 'flex', whiteSpace: 'pre'}}><span style={{width: 56, flex: 'none', textAlign: 'right', paddingRight: 22, color: '#858585'}}>{i + 1}</span><span>{line ? csharpSpans(line, VSCODE_THEME) : ' '}</span></div>)}
+          </pre>
+        </div>
+      </div>
+    </div>
+    <div style={{display: 'flex', gap: 22, padding: '4px 14px', background: '#007acc', color: '#ffffff', fontSize: 14}}><span>main</span><span style={{marginLeft: 'auto'}}>C#</span><span>UTF-8</span></div>
+  </div>;
+}
+
+/** Sync vs async: the same three requests on one thread. items = the two lanes (label, detail); stepAt = phrases that start each lane and the closing note; steps[0] = closing note. */
+type Block = {from: number; to: number; req: number; wait?: boolean};
+const LANE_COLORS = [c.accent, c.blue, c.ok];
+const SYNC_THREAD: Block[] = [[0, 1, 0], [1, 4, 0, 1], [4, 5, 0], [5, 6, 1], [6, 9, 1, 1], [9, 10, 1], [10, 11, 2], [11, 14, 2, 1], [14, 15, 2]].map(([from, to, req, wait]) => ({from, to, req, wait: !!wait}));
+const ASYNC_THREAD: Block[] = [[0, 1, 0], [1, 2, 1], [2, 3, 2], [4, 5, 0], [5, 6, 1], [6, 7, 2]].map(([from, to, req]) => ({from, to, req}));
+const ASYNC_DB: Block[] = [[1, 4, 0], [2, 5, 1], [3, 6, 2]].map(([from, to, req]) => ({from, to, req, wait: true}));
+const TOTAL_UNITS = 15;
+
+function LaneRow({label, blocks, t}: {label: string; blocks: Block[]; t: number}) {
+  const now = t * TOTAL_UNITS;
+  return <div style={{display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8}}>
+    <span style={{width: 110, flex: 'none', fontSize: 18, color: c.muted}}>{label}</span>
+    <div style={{position: 'relative', flex: 1, height: 38, borderRadius: 8, background: c.code, border: `1px solid ${c.border}`}}>
+      {blocks.map((block) => {
+        const shown = Math.max(0, Math.min(block.to, now) - block.from);
+        if (shown <= 0) return null;
+        const color = LANE_COLORS[block.req];
+        return <div key={`${block.from}-${block.req}`} style={{position: 'absolute', top: 3, bottom: 3, left: `${(block.from / TOTAL_UNITS) * 100}%`, width: `${(shown / TOTAL_UNITS) * 100}%`, borderRadius: 5, background: block.wait ? `repeating-linear-gradient(45deg, ${color}33, ${color}33 6px, transparent 6px, transparent 12px)` : color, border: block.wait ? `1px dashed ${color}` : 'none', color: '#10100f', fontSize: 16, fontWeight: 700, display: 'grid', placeItems: 'center', overflow: 'hidden'}}>{!block.wait && shown >= block.to - block.from ? block.req + 1 : ''}</div>;
+      })}
+      {t > 0 && t < 1 && <div style={{position: 'absolute', top: -3, bottom: -3, left: `${t * 100}%`, width: 2, background: c.text}}/>}
+    </div>
+  </div>;
+}
+
+function AsyncLanes({items, steps = [], stepAt, narration}: {items: VisualItem[]; steps?: string[]; stepAt?: string[]; narration?: string}) {
+  const {p} = useStage();
+  const {durationInFrames, fps} = useVideoConfig();
+  const starts = phraseStarts(narration ?? '', stepAt ?? [], durationInFrames / fps) ?? [0.1, 0.4, 0.75];
+  const local = (i: number, end: number) => Math.max(0, Math.min(1, (p - starts[i]) / Math.max(0.01, end - starts[i])));
+  const syncT = local(0, starts[1]), asyncT = local(1, starts[2]);
+  const note = p >= starts[2];
+  return <div style={{display: 'grid', gap: 26, marginTop: 8}}>
+    <div style={{padding: '18px 22px', borderRadius: 16, background: c.panel, border: `1px solid ${p >= starts[0] && p < starts[1] ? c.accent : c.border}`}}>
+      <div style={{display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 12}}><span style={{fontSize: 28, fontWeight: 600}}>{items[0]?.icon} {items[0]?.label}</span><span style={{fontSize: 20, color: c.muted}}>{items[0]?.detail}</span></div>
+      <LaneRow label="Hilo" blocks={SYNC_THREAD} t={syncT}/>
+    </div>
+    <div style={{padding: '18px 22px', borderRadius: 16, background: c.panel, border: `1px solid ${p >= starts[1] && p < starts[2] ? c.accent : c.border}`}}>
+      <div style={{display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 12}}><span style={{fontSize: 28, fontWeight: 600}}>{items[1]?.icon} {items[1]?.label}</span><span style={{fontSize: 20, color: c.muted}}>{items[1]?.detail}</span></div>
+      <LaneRow label="Hilo" blocks={ASYNC_THREAD} t={asyncT}/>
+      <LaneRow label="Base de datos" blocks={ASYNC_DB} t={asyncT}/>
+    </div>
+    <div style={{textAlign: 'center', fontSize: 30, color: c.soft, minHeight: 40, opacity: note ? 1 : 0}}>{steps[0]}</div>
   </div>;
 }
 
@@ -743,8 +833,10 @@ export function VisualScene({scene, slug}: {scene: VisualSceneData; slug: string
     : scene.visual === 'swagger-mock' ? <SwaggerMock scene={scene}/>
     : scene.visual === 'task-board' ? <TaskBoard items={items}/>
     : scene.visual === 'url-anatomy' ? <UrlAnatomy items={items} steps={scene.steps} narration={scene.narration}/>
-    : scene.visual === 'request-flow' ? <RequestFlow items={items} steps={scene.steps} stepAt={scene.stepAt} narration={scene.narration}/>
+    : scene.visual === 'request-flow' ? <RequestFlow items={items} steps={scene.steps} stepAt={scene.stepAt} cards={scene.cards} narration={scene.narration}/>
     : scene.visual === 'memory-list' ? <MemoryList items={items} narration={scene.narration}/>
+    : scene.visual === 'vscode' ? <CodeEditorScene scene={scene}/>
+    : scene.visual === 'async-lanes' ? <AsyncLanes items={items} steps={scene.steps} stepAt={scene.stepAt} narration={scene.narration}/>
     : <Choices items={items}/>;
   return <AbsoluteFill style={{fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif', color: c.text, background: c.bg, padding: '46px 70px', justifyContent: 'center'}}><Title>{scene.title}</Title><CoverContext.Provider value={slug}>{body}</CoverContext.Provider></AbsoluteFill>;
 }
