@@ -24,7 +24,7 @@ export interface CodeScene extends BaseScene {
   reveal?: number[];
   highlights?: number[];
   /** Highlighted lines that change in order, spread evenly over the scene while it is narrated. */
-  focus?: number[][];
+  focus?: Array<number[] | {lines: number[]; at?: string}>;
 }
 
 export interface DiagramNode {
@@ -53,6 +53,8 @@ export interface VisualItem {
   image?: string;
   /** Percentage (0-100) for meters such as usage-panel. */
   value?: number;
+  /** Phrase of the narration at which this item becomes the active one (otherwise items are spread evenly). */
+  at?: string;
 }
 
 export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'prompt-anatomy' | 'model-picker' | 'usage-panel' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices' | 'swagger-mock' | 'task-board' | 'url-anatomy' | 'request-flow' | 'memory-list';
@@ -68,6 +70,8 @@ export interface VisualScene extends BaseScene {
   steps?: string[];
   /** Render items without card background or border (opt-in; supported by timeline and backend). */
   plain?: boolean;
+  /** Narration phrases at which each step (request-flow) becomes active. */
+  stepAt?: string[];
   /** swagger-mock: which Swagger view to draw. */
   stage?: 'overview' | 'method-map' | 'request-response' | 'hands-on';
   /** swagger-mock: API title, or the URL shown in the browser bar for hands-on. */

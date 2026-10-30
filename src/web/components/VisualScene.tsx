@@ -1,6 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {VisualItem, VisualScene as VisualSceneData} from '../../core/types';
+import {currentPhase, phraseStarts} from './sync';
 
 const c = {bg: '#141413', panel: '#242421', raised: '#2c2c28', text: '#f0eee6', muted: '#a8a79f', border: '#3a3a36', accent: '#d97757', soft: '#e8a78f', code: '#10100f', ok: '#a8c49a', blue: '#4a90d9'};
 const mono = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
@@ -15,6 +16,15 @@ function useStage() {
     return {opacity: t, transform: `translateY(${(1 - t) * 18}px)`};
   };
   return {p, show};
+}
+
+/** Index of the active phase: from the narration phrases when every phase has one, otherwise spread evenly over the scene. */
+function useSyncedIndex(narration: string | undefined, phrases: Array<string | undefined>, count: number, evenFrom: number, evenTo: number): number {
+  const {p} = useStage();
+  const {durationInFrames, fps} = useVideoConfig();
+  const starts = phraseStarts(narration ?? '', phrases, durationInFrames / fps);
+  if (starts) return currentPhase(starts, p);
+  return Math.min(count - 1, Math.floor(interpolate(p, [evenFrom, evenTo], [0, count], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})));
 }
 
 const Title = ({children}: {children: React.ReactNode}) => <h1 style={{fontWeight: 500, letterSpacing: '-.035em', fontSize: 50, margin: '0 0 28px'}}>{children}</h1>;
@@ -502,20 +512,22 @@ function TaskBoard({items}: {items: VisualItem[]}) {
 }
 
 /** URL anatomy: a browser bar whose parts (protocol, server, resource) are highlighted one after another. items = parts (label, detail); steps[0] = note under the protocol. */
-function UrlAnatomy({items, steps = []}: {items: VisualItem[]; steps?: string[]}) {
+function UrlAnatomy({items, steps = [], narration}: {items: VisualItem[]; steps?: string[]; narration?: string}) {
   const {p, show} = useStage();
-  const active = Math.min(items.length - 1, Math.floor(clamp01(p, 0.12, 0.92) * items.length));
+  const phase = useSyncedIndex(narration, items.map((item) => item.at), items.length, 0.12, 0.92);
+  const active = Math.max(0, phase);
+  const started = phase >= 0 && p > 0.02;
   return <Window title="Navegador">
     <div style={{padding: '16px 24px', background: c.raised}}>
       <div style={{display: 'flex', alignItems: 'center', padding: '12px 22px', borderRadius: 999, background: c.code, fontFamily: mono, fontSize: 34, border: `1px solid ${c.border}`}}>
         <span style={{color: c.muted, fontSize: 24, marginRight: 14}}>🔒</span>
-        {items.map((item, i) => <span key={item.label} style={{color: p > 0.12 && i === active ? c.accent : c.text, background: p > 0.12 && i === active ? '#d9775722' : 'transparent', borderBottom: `3px solid ${p > 0.12 && i <= active ? c.accent : 'transparent'}`, padding: '2px 4px'}}>{item.label}</span>)}
+        {items.map((item, i) => <span key={item.label} style={{color: started && i === active ? c.accent : c.text, background: started && i === active ? '#d9775722' : 'transparent', borderBottom: `3px solid ${started && i <= active ? c.accent : 'transparent'}`, padding: '2px 4px'}}>{item.label}</span>)}
       </div>
     </div>
     <div style={{display: 'grid', gridTemplateColumns: `repeat(${items.length}, 1fr)`, gap: 20, padding: '34px 40px', background: '#1a1a1d', minHeight: 250}}>
-      {items.map((item, i) => <div key={item.label} style={{...show(0.14 + i * 0.28), textAlign: 'center', opacity: p > 0.12 && i > active ? 0.3 : 1}}>
+      {items.map((item, i) => <div key={item.label} style={{textAlign: 'center', opacity: started ? (i > active ? 0.3 : 1) : 1}}>
         <div style={{fontSize: 56}}>{item.icon}</div>
-        <div style={{fontSize: 30, marginTop: 8, color: i === active && p > 0.12 ? c.accent : c.text}}>{item.detail}</div>
+        <div style={{fontSize: 30, marginTop: 8, color: i === active && started ? c.accent : c.text}}>{item.detail}</div>
         {i === 0 && steps[0] && <div style={{fontSize: 22, color: c.muted, marginTop: 10}}>{steps[0]}</div>}
       </div>)}
     </div>
@@ -523,10 +535,11 @@ function UrlAnatomy({items, steps = []}: {items: VisualItem[]; steps?: string[]}
 }
 
 /** Request flow: the request travels frontend -> backend -> database and the response comes back. items = 3 nodes; steps = captions for the 5 phases. */
-function RequestFlow({items, steps = []}: {items: VisualItem[]; steps?: string[]}) {
-  const {p, show} = useStage();
-  const phase = Math.min(4, Math.floor(clamp01(p, 0.08, 0.95) * 5));
-  const started = p > 0.08;
+function RequestFlow({items, steps = [], stepAt, narration}: {items: VisualItem[]; steps?: string[]; stepAt?: string[]; narration?: string}) {
+  const {show} = useStage();
+  const raw = useSyncedIndex(narration, stepAt ?? [], 5, 0.08, 0.95);
+  const started = raw >= 0;
+  const phase = Math.max(0, raw);
   const lit = (i: number) => started && phase >= i;
   const arrow = (on: boolean, text: string, back: boolean) => <div style={{textAlign: 'center', opacity: on ? 1 : 0.22, color: on ? c.accent : c.muted}}>
     <div style={{fontSize: 22, minHeight: 28}}>{text}</div>
@@ -556,9 +569,9 @@ function RequestFlow({items, steps = []}: {items: VisualItem[]; steps?: string[]
 }
 
 /** Memory list: a sequence of requests (label, detail) and the in-memory list after each one (steps). The last item usually restarts the app. */
-function MemoryList({items}: {items: VisualItem[]}) {
-  const {p, show} = useStage();
-  const active = Math.min(items.length - 1, Math.floor(clamp01(p, 0.06, 0.96) * items.length));
+function MemoryList({items, narration}: {items: VisualItem[]; narration?: string}) {
+  const {show} = useStage();
+  const active = Math.max(0, useSyncedIndex(narration, items.map((item) => item.at), items.length, 0.06, 0.96));
   const list = items[active]?.steps ?? [];
   const reset = items[active]?.icon === '🔄';
   return <div style={{display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 34, alignItems: 'start', marginTop: 6}}>
@@ -729,9 +742,9 @@ export function VisualScene({scene, slug}: {scene: VisualSceneData; slug: string
     : scene.visual === 'prompt-flow' ? <PromptFlow items={items}/>
     : scene.visual === 'swagger-mock' ? <SwaggerMock scene={scene}/>
     : scene.visual === 'task-board' ? <TaskBoard items={items}/>
-    : scene.visual === 'url-anatomy' ? <UrlAnatomy items={items} steps={scene.steps}/>
-    : scene.visual === 'request-flow' ? <RequestFlow items={items} steps={scene.steps}/>
-    : scene.visual === 'memory-list' ? <MemoryList items={items}/>
+    : scene.visual === 'url-anatomy' ? <UrlAnatomy items={items} steps={scene.steps} narration={scene.narration}/>
+    : scene.visual === 'request-flow' ? <RequestFlow items={items} steps={scene.steps} stepAt={scene.stepAt} narration={scene.narration}/>
+    : scene.visual === 'memory-list' ? <MemoryList items={items} narration={scene.narration}/>
     : <Choices items={items}/>;
   return <AbsoluteFill style={{fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif', color: c.text, background: c.bg, padding: '46px 70px', justifyContent: 'center'}}><Title>{scene.title}</Title><CoverContext.Provider value={slug}>{body}</CoverContext.Provider></AbsoluteFill>;
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Audio, interpolate, Sequence, staticFile, useCurrentFrame} from 'remotion';
 import {VisualScene} from './VisualScene';
 import {AUDIO_LEAD_IN} from '../../core/timing';
+import {currentPhase, phraseStarts} from './sync';
 import type {LessonScene, ProducedLesson} from '../../core/types';
 
 export const FPS = 30;
@@ -36,14 +37,18 @@ function csharpSpans(line: string): React.ReactNode[] {
   return out;
 }
 
-function Code({code, highlights = [], reveal = [], focus = [], duration = 4, language}: {code: string; highlights?: number[]; reveal?: number[]; focus?: number[][]; duration?: number; language?: string}) {
+function Code({code, highlights = [], reveal = [], focus = [], duration = 4, language, narration = ''}: {code: string; highlights?: number[]; reveal?: number[]; focus?: Array<number[] | {lines: number[]; at?: string}>; duration?: number; language?: string; narration?: string}) {
   const frame = useCurrentFrame();
   const lines = code.split('\n');
   const csharp = language === 'csharp';
   const shown = reveal.length ? reveal.filter((at) => frame >= at * FPS).length : lines.length;
   const progress = Math.min(1, frame / Math.max(1, duration * FPS));
-  const step = focus.length ? Math.min(focus.length - 1, Math.floor(interpolate(progress, [0.05, 0.95], [0, focus.length], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}))) : -1;
-  const lit = step >= 0 ? focus[step] : highlights;
+  const focusLines = focus.map((entry) => Array.isArray(entry) ? entry : entry.lines);
+  const starts = phraseStarts(narration, focus.map((entry) => Array.isArray(entry) ? undefined : entry.at), duration);
+  const step = !focus.length ? -1
+    : starts ? currentPhase(starts, progress)
+    : Math.min(focus.length - 1, Math.floor(interpolate(progress, [0.05, 0.95], [0, focus.length], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})));
+  const lit = step >= 0 ? focusLines[step] : highlights;
   const fontSize = csharp ? Math.max(20, Math.min(34, Math.floor(470 / (lines.length * 1.55)))) : 28;
   const colored = (line: string) => csharp
     ? csharpSpans(line)
@@ -67,7 +72,7 @@ export function SceneCard({scene, slug}: {scene: LessonScene; slug: string}) {
   const enter = interpolate(frame, [0, 18], [0.82, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   const common: React.CSSProperties = {fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif', color: palette.text, background: palette.bg, padding: 70, opacity: enter, transform: `translateY(${(1 - enter) * 24}px)`};
   if (scene.type === 'visual') return <VisualScene scene={scene} slug={slug}/>;
-  if (scene.type === 'code') return <AbsoluteFill style={{...common, alignItems: 'center', justifyContent: 'center'}}><div style={{color: palette.accentSoft, fontSize: 19, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 20}}>{scene.title}</div><Code code={scene.code} highlights={scene.highlights} reveal={scene.reveal} focus={scene.focus} duration={scene.duration} language={scene.language}/></AbsoluteFill>;
+  if (scene.type === 'code') return <AbsoluteFill style={{...common, alignItems: 'center', justifyContent: 'center'}}><div style={{color: palette.accentSoft, fontSize: 19, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 20}}>{scene.title}</div><Code code={scene.code} highlights={scene.highlights} reveal={scene.reveal} focus={scene.focus} duration={scene.duration} language={scene.language} narration={scene.narration}/></AbsoluteFill>;
   if (scene.type === 'diagram') return <AbsoluteFill style={{...common, justifyContent: 'center'}}><h1 style={{fontWeight: 500, letterSpacing: '-.03em', fontSize: 56, margin: '0 0 50px'}}>{scene.title}</h1><div style={{display: 'flex', gap: 38, alignItems: 'center', justifyContent: 'center'}}>{scene.nodes.map((node, index) => <React.Fragment key={node.id}><div style={{padding: '28px 38px', border: `1px solid ${palette.border}`, borderRadius: 14, fontSize: 30, background: palette.panel}}>{node.label}</div>{index < scene.nodes.length - 1 && <span style={{fontSize: 42, color: palette.accent}}>→</span>}</React.Fragment>)}</div></AbsoluteFill>;
   if (scene.type === 'terminal') return <AbsoluteFill style={{...common, justifyContent: 'center'}}><h1 style={{fontWeight: 500, letterSpacing: '-.03em', fontSize: 56}}>{scene.title}</h1><pre style={{fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', color: palette.codeText, fontSize: 29, lineHeight: 1.6, background: palette.code, padding: 42, borderRadius: 14, border: `1px solid ${palette.border}`, boxShadow: '0 22px 60px #0006'}}><span style={{color: palette.accentSoft}}>$ {scene.command}</span>{'\n'}<span>{scene.output}</span></pre></AbsoluteFill>;
   return <AbsoluteFill style={{...common, justifyContent: 'center'}}><div style={{color: palette.accentSoft, fontSize: 19, fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase'}}>Concepto</div><h1 style={{fontWeight: 500, letterSpacing: '-.045em', fontSize: 72, lineHeight: 1.04, maxWidth: 1050, margin: '24px 0'}}>{scene.title}</h1><p style={{fontSize: 34, lineHeight: 1.5, color: palette.muted, maxWidth: 1100}}>{scene.body}</p>{scene.bullets?.map((bullet, index) => <div key={bullet} style={{fontSize: 28, marginTop: 15, opacity: frame > 18 + index * 12 ? 1 : 0, color: palette.text}}><span style={{color:palette.accent}}>→</span> {bullet}</div>)}</AbsoluteFill>;
