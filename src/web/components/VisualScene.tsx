@@ -481,6 +481,139 @@ function Choices({items}: {items: VisualItem[]}) {
   </div>;
 }
 
+/** Swagger UI look-alike (light theme, real method colors). A visual simulation, not a live request. */
+const SWAGGER_COLORS: Record<string, string> = {GET: '#61affe', POST: '#49cc90', PUT: '#fca130', DELETE: '#f93e3e'};
+const SWAGGER_STATUS: Record<number, string> = {200: 'OK', 201: 'Created', 204: 'No Content', 404: 'Not Found'};
+const swInk = '#3b4151';
+const clamp01 = (p: number, from: number, to: number) => interpolate(p, [from, to], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+
+function SwOp({method, path, caption, open, glow, activePart, children}: {method: string; path: string; caption?: string; open?: boolean; glow?: boolean; activePart?: boolean; children?: React.ReactNode}) {
+  const color = SWAGGER_COLORS[method] ?? '#999';
+  return <div style={{marginBottom: 10, borderRadius: 6, border: `1px solid ${color}`, background: `${color}1a`, boxShadow: glow ? `0 0 0 4px ${color}55, 0 6px 22px #0003` : '0 1px 3px #0001', transform: glow ? 'scale(1.015)' : 'none'}}>
+    <div style={{display: 'flex', alignItems: 'center', gap: 16, padding: '6px 12px', borderBottom: open ? `1px solid ${color}` : 'none'}}>
+      <span style={{minWidth: 112, textAlign: 'center', padding: '5px 0', borderRadius: 4, background: color, color: '#fff', fontWeight: 700, fontSize: 22, boxShadow: activePart ? '0 0 0 3px #fff, 0 0 0 6px ' + color : 'none'}}>{method}</span>
+      <span style={{fontFamily: mono, fontWeight: 700, fontSize: 24, color: swInk, background: activePart ? '#fff3a8' : 'transparent', padding: '0 6px', borderRadius: 4}}>{path}</span>
+      {caption && <span style={{whiteSpace: 'nowrap', fontSize: 20, color: swInk, fontWeight: activePart ? 700 : 400, opacity: 0.85}}>{caption}</span>}
+      <span style={{marginLeft: 'auto', color: swInk, fontSize: 22, opacity: 0.7}}>{open ? '⌃' : '⌄'}</span>
+    </div>
+    {open && <div style={{padding: '10px 22px 12px', background: '#ffffffcc'}}>{children}</div>}
+  </div>;
+}
+
+const SwBtn = ({children, fill, danger, pressed}: {children: React.ReactNode; fill?: boolean; danger?: boolean; pressed?: boolean}) => {
+  const color = danger ? '#ff6060' : '#4990e2';
+  return <span style={{display: 'inline-block', padding: '7px 28px', borderRadius: 4, fontWeight: 700, fontSize: 21, border: `2px solid ${color}`, background: fill ? (pressed ? '#2f6db8' : color) : '#fff', color: fill ? '#fff' : color, transform: pressed ? 'scale(0.96)' : 'none'}}>{children}</span>;
+};
+
+const SwCode = ({text}: {text: string}) => <pre style={{margin: 0, padding: '12px 16px', borderRadius: 4, background: '#41444e', color: '#fff', fontFamily: mono, fontSize: 20, lineHeight: 1.4, whiteSpace: 'pre-wrap'}}>{text}</pre>;
+
+function SwResponse({status, json}: {status: number; json?: string}) {
+  return <div style={{marginTop: 12}}>
+    <div style={{fontWeight: 700, fontSize: 22, color: swInk, marginBottom: 6}}>Server response</div>
+    <div style={{display: 'grid', gridTemplateColumns: '110px 1fr', gap: 12, fontSize: 20, color: swInk}}>
+      <div style={{fontWeight: 700}}>Code</div><div style={{fontWeight: 700}}>Details</div>
+      <div style={{fontFamily: mono, fontWeight: 700, fontSize: 24}}>{status}<div style={{fontFamily: 'inherit', fontWeight: 400, fontSize: 15, opacity: 0.7}}>{SWAGGER_STATUS[status]}</div></div>
+      <div>
+        <div style={{fontWeight: 700, marginBottom: 4}}>Response body</div>
+        {json ? <SwCode text={json}/> : <SwCode text="No content"/>}
+      </div>
+    </div>
+  </div>;
+}
+
+function SwaggerMock({scene}: {scene: VisualSceneData}) {
+  const {p, show} = useStage();
+  const stage = scene.stage ?? 'overview';
+  const ops = scene.operations ?? [];
+  const title = stage === 'overview' || stage === 'method-map' ? (scene.header ?? 'Todo API') : 'Todo API';
+  const url = scene.header?.startsWith('http') ? scene.header : 'http://localhost:5080/swagger';
+  const active = ops.length ? Math.min(ops.length - 1, Math.floor(clamp01(p, 0.15, 0.9) * ops.length)) : 0;
+
+  let body: React.ReactNode = null;
+  if (stage === 'overview' || stage === 'method-map') {
+    const op = ops[active];
+    body = <div style={{display: 'grid', gridTemplateColumns: stage === 'overview' ? '1.8fr 1fr' : '1fr', gap: 34}}>
+      <div>
+        {ops.map((o, i) => <div key={`${o.method}${o.path}`} style={show(0.04 + i * 0.05)}>
+          <SwOp method={o.method} path={o.path} caption={o.caption} glow={p > 0.15 && i === active} activePart={stage === 'method-map' && p > 0.15 && i === active}/>
+        </div>)}
+        {stage === 'method-map' && op && p > 0.15 && /\{id\}/.test(op.path) && <div style={{marginTop: 4, fontSize: 24, color: swInk}}><b style={{background: '#fff3a8', padding: '2px 8px', borderRadius: 4, fontFamily: mono}}>{'{id}'}</b> identifica una tarea</div>}
+      </div>
+      {stage === 'overview' && <div style={{alignSelf: 'center', display: 'grid', gap: 14}}>
+        <div style={{fontSize: 20, color: swInk, letterSpacing: 2, fontWeight: 700}}>UNA TAREA</div>
+        {['Pending', 'InProgress', 'Done'].map((state, i) => {
+          const now = Math.min(2, Math.floor(clamp01(p, 0.2, 0.9) * 3));
+          const on = p > 0.2 && i <= now;
+          return <div key={state} style={{padding: '16px 22px', borderRadius: 8, border: `2px solid ${i === now && p > 0.2 ? '#49cc90' : '#d8dde7'}`, background: on ? '#49cc9022' : '#fff', fontFamily: mono, fontSize: 26, fontWeight: 700, color: swInk}}>{i === 0 ? '⏳' : i === 1 ? '🛠️' : '✅'} {state}</div>;
+        })}
+      </div>}
+    </div>;
+  } else if (stage === 'request-response' && scene.request) {
+    const r = scene.request;
+    const tried = p > 0.14, executed = p > 0.5;
+    const json = r.json ?? '';
+    const typed = json.slice(0, Math.round(clamp01(p, 0.2, 0.42) * json.length));
+    const idMatch = r.path.match(/\/(\d+)$/);
+    const res = scene.response;
+    const fu = scene.followup;
+    body = <div>
+      <SwOp method={r.method} path={idMatch ? r.path.replace(/\d+$/, '{id}') : r.path} open={!(fu && p > 0.75)}>
+        <div style={{display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10}}>
+          <span style={{fontWeight: 700, fontSize: 22, color: swInk}}>Parameters</span>
+          <span style={{marginLeft: 'auto'}}>{tried ? <SwBtn danger>Cancel</SwBtn> : <SwBtn pressed={p > 0.12}>Try it out</SwBtn>}</span>
+        </div>
+        {idMatch ? <div style={{display: 'flex', gap: 16, alignItems: 'center', fontSize: 21, color: swInk, marginBottom: 10}}>
+          <span><b>id</b> <span style={{color: '#f93e3e', fontSize: 15}}>* required</span></span>
+          <span style={{padding: '5px 14px', border: `1px solid ${tried ? '#4990e2' : '#d8dde7'}`, borderRadius: 4, background: '#fff', fontFamily: mono, minWidth: 90}}>{tried ? idMatch[1] : ''}</span>
+        </div> : <div style={{fontSize: 20, color: swInk, opacity: 0.7, marginBottom: 8}}>{json ? '' : 'No parameters'}</div>}
+        {json && <div style={{marginBottom: 10}}>
+          <div style={{fontWeight: 700, fontSize: 20, color: swInk, marginBottom: 4}}>Request body <span style={{fontWeight: 400, fontSize: 15, opacity: 0.7}}>application/json</span></div>
+          <pre style={{margin: 0, padding: '10px 14px', borderRadius: 4, background: '#fff', border: `1px solid ${tried ? '#4990e2' : '#d8dde7'}`, fontFamily: mono, fontSize: 19, lineHeight: 1.4, whiteSpace: 'pre-wrap', minHeight: 56, color: swInk}}>{tried ? typed : ''}{tried && !executed && <span style={{opacity: 0.6}}>|</span>}</pre>
+        </div>}
+        {tried && <div style={{...show(0.14)}}><SwBtn fill pressed={p > 0.46 && p < 0.52}>Execute</SwBtn></div>}
+        {executed && res && <div style={show(0.5)}><SwResponse status={res.status} json={res.json}/></div>}
+      </SwOp>
+      {fu && p > 0.75 && <div style={show(0.75)}>
+        <SwOp method={fu.method} path={fu.path} open>
+          <div style={{fontSize: 20, color: swInk, marginBottom: 4}}>Execute → <b>verificar el nuevo estado</b></div>
+          <SwResponse status={fu.status} json={fu.json}/>
+        </SwOp>
+      </div>}
+    </div>;
+  } else {
+    const steps = scene.steps ?? [];
+    const now = Math.min(steps.length - 1, Math.floor(clamp01(p, 0.1, 0.92) * steps.length));
+    const methodOf = (step: string, i: number) => (step.match(/\b(POST|GET|PUT|DELETE)\b/)?.[1] ?? (i === steps.length - 1 ? 'GET' : 'GET'));
+    body = <div>
+      {steps.map((step, i) => {
+        const m = methodOf(step, i);
+        const done = p > 0.1 && i < now, cur = p > 0.1 && i === now;
+        return <div key={step} style={{...show(0.04 + i * 0.05), display: 'flex', alignItems: 'center', gap: 14, opacity: p > 0.1 && i > now ? 0.45 : 1}}>
+          <span style={{display: 'grid', placeItems: 'center', flex: 'none', width: 40, height: 40, borderRadius: '50%', background: done ? '#49cc90' : cur ? '#4990e2' : '#d8dde7', color: '#fff', fontWeight: 700, fontSize: 22}}>{done ? '✓' : i + 1}</span>
+          <div style={{flex: 1}}><SwOp method={m} path={m === 'PUT' || i === steps.length - 1 ? '/api/todos/{id}' : '/api/todos'} caption={step} glow={cur}/></div>
+        </div>;
+      })}
+      <div style={{...show(0.3), display: 'flex', gap: 14, marginTop: 8}}>
+        {['./run/build.sh', './run/start.sh'].map((cmd) => <span key={cmd} style={{fontFamily: mono, fontSize: 21, color: '#e6e3d9', background: '#1d1d1b', padding: '8px 16px', borderRadius: 8}}>$ {cmd}</span>)}
+      </div>
+    </div>;
+  }
+
+  return <div style={{background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 24px 70px #0007', color: swInk, fontFamily: 'Helvetica, Arial, sans-serif', zoom: stage === 'request-response' ? 0.82 : 1}}>
+    <div style={{display: 'flex', alignItems: 'center', gap: 12, padding: '10px 18px', background: '#dee1e6'}}>
+      {['#ef6b5f', '#e5c06a', '#7bc67e'].map((color) => <span key={color} style={{width: 13, height: 13, borderRadius: '50%', background: color}}/>)}
+      <span style={{flex: 1, marginLeft: 10, padding: '6px 18px', borderRadius: 999, background: '#fff', fontFamily: mono, fontSize: 20, color: '#555'}}>{url}</span>
+    </div>
+    <div style={{display: 'flex', alignItems: 'center', gap: 12, padding: '10px 28px 6px'}}>
+      <span style={{display: 'grid', placeItems: 'center', width: 32, height: 32, borderRadius: '50%', background: '#85ea2d', color: '#173647', fontWeight: 800, fontSize: 16}}>{'{-}'}</span>
+      <span style={{fontWeight: 700, fontSize: 32}}>{title}</span>
+      <span style={{fontSize: 14, fontWeight: 700, color: '#fff', background: '#7d8492', padding: '2px 8px', borderRadius: 12}}>1.0</span>
+      <span style={{fontSize: 14, fontWeight: 700, color: '#fff', background: '#89bf04', padding: '2px 8px', borderRadius: 12}}>OAS 3.0</span>
+    </div>
+    <div style={{padding: '6px 30px 18px'}}>{body}</div>
+  </div>;
+}
+
 export function VisualScene({scene, slug}: {scene: VisualSceneData; slug: string}) {
   const items = scene.items ?? [];
   const body = scene.visual === 'timeline' ? <Timeline items={items} plain={scene.plain}/>
@@ -500,6 +633,7 @@ export function VisualScene({scene, slug}: {scene: VisualSceneData; slug: string
     : scene.visual === 'agent-work' ? <AgentWork steps={scene.steps}/>
     : scene.visual === 'app-preview' ? <AppPreview items={items} cards={scene.cards} checks={scene.steps}/>
     : scene.visual === 'prompt-flow' ? <PromptFlow items={items}/>
+    : scene.visual === 'swagger-mock' ? <SwaggerMock scene={scene}/>
     : <Choices items={items}/>;
   return <AbsoluteFill style={{fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif', color: c.text, background: c.bg, padding: '46px 70px', justifyContent: 'center'}}><Title>{scene.title}</Title><CoverContext.Provider value={slug}>{body}</CoverContext.Provider></AbsoluteFill>;
 }

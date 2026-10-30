@@ -136,7 +136,7 @@ export function validateLesson(lesson: LessonDefinition): ValidationIssue[] {
     if (!isText(scene.narration)) error(`${base}.narration`, 'is required');
     if (scene.type === 'code' && !isText(scene.code)) error(`${base}.code`, 'is required');
     if (scene.type === 'diagram' && (!scene.nodes?.length || !Array.isArray(scene.edges))) error(base, 'diagram requires nodes and edges');
-    if (scene.type === 'visual' && !['timeline', 'browser-download', 'installer', 'extensions', 'open-folder', 'open-chat', 'agent-work', 'browser-page', 'prompt-anatomy', 'model-picker', 'usage-panel', 'frontend', 'backend', 'database', 'docker', 'app-preview', 'prompt-flow', 'choices'].includes(scene.visual)) error(`${base}.visual`, 'is invalid');
+    if (scene.type === 'visual' && !['timeline', 'browser-download', 'installer', 'extensions', 'open-folder', 'open-chat', 'agent-work', 'browser-page', 'prompt-anatomy', 'model-picker', 'usage-panel', 'frontend', 'backend', 'database', 'docker', 'app-preview', 'prompt-flow', 'choices', 'swagger-mock'].includes(scene.visual)) error(`${base}.visual`, 'is invalid');
     if (scene.type === 'terminal' && (!isText(scene.command) || typeof scene.output !== 'string')) error(base, 'terminal requires command and output');
   });
   const exerciseIds = new Set<string>();

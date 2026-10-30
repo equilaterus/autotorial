@@ -53,7 +53,7 @@ export interface VisualItem {
   value?: number;
 }
 
-export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'prompt-anatomy' | 'model-picker' | 'usage-panel' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices';
+export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'prompt-anatomy' | 'model-picker' | 'usage-panel' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices' | 'swagger-mock';
 
 export interface VisualScene extends BaseScene {
   type: 'visual';
@@ -66,6 +66,14 @@ export interface VisualScene extends BaseScene {
   steps?: string[];
   /** Render items without card background or border (opt-in; supported by timeline and backend). */
   plain?: boolean;
+  /** swagger-mock: which Swagger view to draw. */
+  stage?: 'overview' | 'method-map' | 'request-response' | 'hands-on';
+  /** swagger-mock: API title, or the URL shown in the browser bar for hands-on. */
+  header?: string;
+  operations?: Array<{method: string; path: string; caption?: string}>;
+  request?: {method: string; path: string; json?: string};
+  response?: {status: number; json?: string};
+  followup?: {method: string; path: string; status: number; json?: string};
 }
 
 export type LessonScene = ConceptScene | CodeScene | DiagramScene | TerminalScene | VisualScene;
