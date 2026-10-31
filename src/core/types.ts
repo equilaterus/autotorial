@@ -110,6 +110,8 @@ export interface CodeTest {
 
 export interface CodeExercise extends ExerciseBase {
   type: 'code-completion';
+  /** Language of the editor highlighting; the sandbox runs JavaScript. */
+  language?: 'javascript' | 'csharp';
   starter: string;
   solution?: string;
   tests: CodeTest[];

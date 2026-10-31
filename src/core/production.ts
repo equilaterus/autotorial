@@ -45,7 +45,9 @@ export async function produceSession(hostRoot: string, slug: string, voice: Voic
   const errors = issues.filter((issue) => issue.severity === 'error');
   if (errors.length) throw new Error(errors.map((issue) => `${issue.path}: ${issue.message}`).join('\n'));
   for (const exercise of lesson.exercises) {
-    if (exercise.type === 'code-completion' && exercise.solution) {
+    if (exercise.type === 'code-completion' && exercise.solution && exercise.language === 'csharp') {
+      console.warn(`warning: author solution for ${exercise.id} is C# and was not verified (C# runs in the learner's browser)`);
+    } else if (exercise.type === 'code-completion' && exercise.solution) {
       const result = await runExerciseInNode(exercise.solution, exercise.tests);
       if (!result.passed) throw new Error(`Author solution for ${exercise.id} does not pass: ${JSON.stringify(result.tests)}`);
     }

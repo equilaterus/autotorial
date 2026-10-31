@@ -580,12 +580,13 @@ function MemoryList({items, narration}: {items: VisualItem[]; narration?: string
   const {show} = useStage();
   const active = Math.max(0, useSyncedIndex(narration, items.map((item) => item.at), items.length, 0.06, 0.96));
   const list = items[active]?.steps ?? [];
+  const compact = items.length > 5;
   const reset = items[active]?.icon === '🔄';
   return <div style={{display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 34, alignItems: 'start', marginTop: 6}}>
-    <div style={{display: 'grid', gap: 10}}>
-      {items.map((item, i) => <div key={item.label} style={{...show(0.03 + i * 0.03), display: 'flex', alignItems: 'center', gap: 14, padding: '12px 18px', borderRadius: 12, background: i === active ? '#28211e' : c.panel, border: `1px solid ${i === active ? c.accent : c.border}`, opacity: i > active ? 0.35 : 1}}>
-        <span style={{fontSize: 28}}>{i < active ? '✓' : item.icon}</span>
-        <div><div style={{fontFamily: mono, fontSize: 23}}>{item.label}</div><div style={{fontSize: 19, color: c.muted}}>{item.detail}</div></div>
+    <div style={{display: 'grid', gap: compact ? 6 : 10}}>
+      {items.map((item, i) => <div key={item.label} style={{...show(0.03 + i * 0.03), display: 'flex', alignItems: 'center', gap: 14, padding: compact ? '6px 16px' : '12px 18px', borderRadius: 12, background: i === active ? '#28211e' : c.panel, border: `1px solid ${i === active ? c.accent : c.border}`, opacity: i > active ? 0.35 : 1}}>
+        <span style={{fontSize: compact ? 22 : 28}}>{i < active ? '✓' : item.icon}</span>
+        <div><div style={{fontFamily: mono, fontSize: compact ? 20 : 23}}>{item.label}</div><div style={{fontSize: compact ? 16 : 19, color: c.muted}}>{item.detail}</div></div>
       </div>)}
     </div>
     <div style={{padding: 22, borderRadius: 16, background: c.panel, border: `2px solid ${reset ? c.ok : c.accent}`, minHeight: 250}}>

@@ -100,6 +100,7 @@ async function main() {
     const lesson = JSON.parse(await readFile(path.join(outputRoot(hostRoot), 'generated', `${slug}.json`), 'utf8')) as ProducedLesson;
     const exercise = lesson.exercises.find((item) => item.id === id);
     if (!exercise || exercise.type !== 'code-completion' || !exercise.solution) throw new Error('No code exercise with an author solution found');
+    if (exercise.language === 'csharp') throw new Error('C# exercises run in the browser and cannot be verified from the command line');
     const result = await runExerciseInNode(exercise.solution, exercise.tests);
     console.log(JSON.stringify(result, null, 2));
     if (!result.passed) process.exitCode = 1;
