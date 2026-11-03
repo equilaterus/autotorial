@@ -2,7 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {VisualItem, VisualScene as VisualSceneData} from '../../core/types';
 import {currentPhase, phraseStarts} from './sync';
-import {csharpSpans, VSCODE_THEME} from './csharp';
+import {codeSpans, csharpSpans, VSCODE_THEME, type CodeTheme} from './csharp';
 
 const c = {bg: '#141413', panel: '#242421', raised: '#2c2c28', text: '#f0eee6', muted: '#a8a79f', border: '#3a3a36', accent: '#d97757', soft: '#e8a78f', code: '#10100f', ok: '#a8c49a', blue: '#4a90d9'};
 const mono = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
@@ -679,6 +679,28 @@ function AsyncLanes({items, steps = [], stepAt, narration}: {items: VisualItem[]
   </div>;
 }
 
+/** Two related tables: items[0] and items[1] (label = table name, steps = its columns; "(PK)"/"(FK)" mark keys); steps[0] = the relation. at = narration phrase that reveals each table; stepAt[0] = the one that reveals the relation. */
+function TableRelation({items, steps = [], stepAt, narration}: {items: VisualItem[]; steps?: string[]; stepAt?: string[]; narration?: string}) {
+  const phase = useSyncedIndex(narration, [items[0]?.at, items[1]?.at, stepAt?.[0]], 3, 0.1, 0.9);
+  const table = (item: VisualItem, visible: boolean) => <div style={{flex: 1, opacity: visible ? 1 : 0.12, transition: 'none', borderRadius: 14, overflow: 'hidden', background: c.panel, border: `1px solid ${c.border}`}}>
+    <div style={{padding: '12px 18px', background: c.raised, fontSize: 28, fontWeight: 600}}>{item.icon} {item.label}</div>
+    {(item.steps ?? []).map((column) => {
+      const key = /\((PK|FK)\)/.exec(column)?.[1];
+      return <div key={column} style={{display: 'flex', justifyContent: 'space-between', padding: '7px 18px', fontFamily: mono, fontSize: 21, borderTop: `1px solid ${c.border}`, color: key === 'FK' ? c.accent : c.text, background: key === 'FK' ? '#28211e' : 'transparent'}}>
+        <span>{column.replace(/\s*\((PK|FK)\)/, '')}</span>{key && <span style={{fontSize: 16, color: key === 'FK' ? c.accent : c.ok}}>{key === 'PK' ? '🔑 PK' : '🔗 FK'}</span>}
+      </div>;
+    })}
+  </div>;
+  return <div style={{display: 'flex', alignItems: 'center', gap: 0, marginTop: 10}}>
+    {table(items[0], phase >= 0)}
+    <div style={{width: 190, textAlign: 'center', opacity: phase >= 2 ? 1 : 0.12, color: c.accent}}>
+      <div style={{fontSize: 22, minHeight: 56, padding: '0 8px', color: c.soft}}>{steps[0]}</div>
+      <div style={{fontSize: 40, lineHeight: 1}}>1 ──── N</div>
+    </div>
+    {table(items[1], phase >= 1)}
+  </div>;
+}
+
 /** Swagger UI look-alike (light theme, real method colors). A visual simulation, not a live request. */
 const SWAGGER_COLORS: Record<string, string> = {GET: '#61affe', POST: '#49cc90', PUT: '#fca130', DELETE: '#f93e3e'};
 const SWAGGER_STATUS: Record<number, string> = {200: 'OK', 201: 'Created', 204: 'No Content', 404: 'Not Found'};
@@ -703,7 +725,8 @@ const SwBtn = ({children, fill, danger, pressed}: {children: React.ReactNode; fi
   return <span style={{display: 'inline-block', padding: '7px 28px', borderRadius: 4, fontWeight: 700, fontSize: 21, border: `2px solid ${color}`, background: fill ? (pressed ? '#2f6db8' : color) : '#fff', color: fill ? '#fff' : color, transform: pressed ? 'scale(0.96)' : 'none'}}>{children}</span>;
 };
 
-const SwCode = ({text}: {text: string}) => <pre style={{margin: 0, padding: '12px 16px', borderRadius: 4, background: '#41444e', color: '#fff', fontFamily: mono, fontSize: 20, lineHeight: 1.4, whiteSpace: 'pre-wrap'}}>{text}</pre>;
+const SW_JSON_THEME: CodeTheme = {comment: '#9aa0aa', string: '#e9a27a', attribute: '#9cdcfe', number: '#b5cea8', keyword: '#7ab7ff', method: '#fff', type: '#fff', plain: '#ffffff'};
+const SwCode = ({text, json}: {text: string; json?: boolean}) => <pre style={{margin: 0, padding: '12px 16px', borderRadius: 4, background: '#41444e', color: '#fff', fontFamily: mono, fontSize: 20, lineHeight: 1.4, whiteSpace: 'pre-wrap'}}>{json ? text.split('\n').map((line, index) => <div key={index}>{line ? codeSpans(line, 'json', SW_JSON_THEME) : ' '}</div>) : text}</pre>;
 
 function SwResponse({status, json}: {status: number; json?: string}) {
   return <div style={{marginTop: 12}}>
@@ -713,7 +736,7 @@ function SwResponse({status, json}: {status: number; json?: string}) {
       <div style={{fontFamily: mono, fontWeight: 700, fontSize: 24}}>{status}<div style={{fontFamily: 'inherit', fontWeight: 400, fontSize: 15, opacity: 0.7}}>{SWAGGER_STATUS[status]}</div></div>
       <div>
         <div style={{fontWeight: 700, marginBottom: 4}}>Response body</div>
-        {json ? <SwCode text={json}/> : <SwCode text="No content"/>}
+        {json ? <SwCode text={json} json/> : <SwCode text="No content"/>}
       </div>
     </div>
   </div>;
@@ -724,6 +747,7 @@ function SwaggerMock({scene}: {scene: VisualSceneData}) {
   const stage = scene.stage ?? 'overview';
   const ops = scene.operations ?? [];
   const title = stage === 'overview' || stage === 'method-map' ? (scene.header ?? 'API de Tareas') : 'API de Tareas';
+  const jsonLines = Math.max((scene.response?.json ?? '').split('\n').length, (scene.followup?.json ?? '').split('\n').length);
   const url = scene.header?.startsWith('http') ? scene.header : 'http://localhost:5080/swagger';
   const active = ops.length ? Math.min(ops.length - 1, Math.floor(clamp01(p, 0.15, 0.9) * ops.length)) : 0;
 
@@ -797,7 +821,7 @@ function SwaggerMock({scene}: {scene: VisualSceneData}) {
     </div>;
   }
 
-  return <div style={{background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 24px 70px #0007', color: swInk, fontFamily: 'Helvetica, Arial, sans-serif', zoom: stage === 'request-response' ? 0.82 : 1}}>
+  return <div style={{background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 24px 70px #0007', color: swInk, fontFamily: 'Helvetica, Arial, sans-serif', zoom: stage === 'request-response' ? (jsonLines > 7 ? 0.7 : 0.82) : 1}}>
     <div style={{display: 'flex', alignItems: 'center', gap: 12, padding: '10px 18px', background: '#dee1e6'}}>
       {['#ef6b5f', '#e5c06a', '#7bc67e'].map((color) => <span key={color} style={{width: 13, height: 13, borderRadius: '50%', background: color}}/>)}
       <span style={{flex: 1, marginLeft: 10, padding: '6px 18px', borderRadius: 999, background: '#fff', fontFamily: mono, fontSize: 20, color: '#555'}}>{url}</span>
@@ -837,6 +861,7 @@ export function VisualScene({scene, slug}: {scene: VisualSceneData; slug: string
     : scene.visual === 'request-flow' ? <RequestFlow items={items} steps={scene.steps} stepAt={scene.stepAt} cards={scene.cards} narration={scene.narration}/>
     : scene.visual === 'memory-list' ? <MemoryList items={items} narration={scene.narration}/>
     : scene.visual === 'vscode' ? <CodeEditorScene scene={scene}/>
+    : scene.visual === 'table-relation' ? <TableRelation items={items} steps={scene.steps} stepAt={scene.stepAt} narration={scene.narration}/>
     : scene.visual === 'async-lanes' ? <AsyncLanes items={items} steps={scene.steps} stepAt={scene.stepAt} narration={scene.narration}/>
     : <Choices items={items}/>;
   return <AbsoluteFill style={{fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif', color: c.text, background: c.bg, padding: '46px 70px', justifyContent: 'center'}}><Title>{scene.title}</Title><CoverContext.Provider value={slug}>{body}</CoverContext.Provider></AbsoluteFill>;

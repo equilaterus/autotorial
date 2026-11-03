@@ -3,7 +3,7 @@ import {AbsoluteFill, Audio, interpolate, Sequence, staticFile, useCurrentFrame}
 import {VisualScene} from './VisualScene';
 import {AUDIO_LEAD_IN} from '../../core/timing';
 import {currentPhase, phraseStarts} from './sync';
-import {csharpSpans} from './csharp';
+import {codeSpans} from './csharp';
 import type {LessonScene, ProducedLesson} from '../../core/types';
 
 export const FPS = 30;
@@ -17,7 +17,7 @@ const palette = {bg: '#141413', panel: '#242421', text: '#f0eee6', muted: '#a8a7
 function Code({code, highlights = [], reveal = [], focus = [], duration = 4, language, narration = '', split}: {code: string; highlights?: number[]; reveal?: number[]; focus?: Array<number[] | {lines: number[]; at?: string}>; duration?: number; language?: string; narration?: string; split?: number}) {
   const frame = useCurrentFrame();
   const lines = code.split('\n');
-  const csharp = language === 'csharp';
+  const csharp = language === 'csharp' || language === 'json';
   const shown = reveal.length ? reveal.filter((at) => frame >= at * FPS).length : lines.length;
   const progress = Math.min(1, frame / Math.max(1, duration * FPS));
   const focusLines = focus.map((entry) => Array.isArray(entry) ? entry : entry.lines);
@@ -35,7 +35,7 @@ function Code({code, highlights = [], reveal = [], focus = [], duration = 4, lan
   const fitWidth = Math.floor(avail / (0.6 * widest));
   const fontSize = csharp ? Math.max(14, Math.min(34, fitWidth, columns.length > 1 ? fitHeight : Math.max(20, fitHeight))) : 28;
   const colored = (line: string) => csharp
-    ? csharpSpans(line)
+    ? codeSpans(line, language === 'json' ? 'json' : 'csharp')
     : line.split(/(\/\/.*|\b(?:function|return|const|let|var|console|if|else|for|while)\b|"[^"\n]*"|'[^'\n]*'|\b\d+(?:\.\d+)?\b)/g).map((token, tokenIndex) => {
       const color = token.startsWith('//') ? '#77776f' : /^(function|return|const|let|var|if|else|for|while)$/.test(token) ? '#e8a78f' : token === 'console' ? '#c4b5fd' : /^(?:"|')/.test(token) ? '#a8c49a' : /^\d/.test(token) ? '#e5c890' : palette.codeText;
       return <span key={tokenIndex} style={{color}}>{token}</span>;

@@ -59,7 +59,7 @@ export interface VisualItem {
   at?: string;
 }
 
-export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'prompt-anatomy' | 'model-picker' | 'usage-panel' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices' | 'swagger-mock' | 'task-board' | 'url-anatomy' | 'request-flow' | 'memory-list' | 'vscode' | 'async-lanes';
+export type VisualKind = 'timeline' | 'browser-download' | 'installer' | 'extensions' | 'open-folder' | 'open-chat' | 'agent-work' | 'browser-page' | 'prompt-anatomy' | 'model-picker' | 'usage-panel' | 'frontend' | 'backend' | 'database' | 'docker' | 'app-preview' | 'prompt-flow' | 'choices' | 'swagger-mock' | 'task-board' | 'url-anatomy' | 'request-flow' | 'memory-list' | 'vscode' | 'async-lanes' | 'table-relation';
 
 export interface VisualScene extends BaseScene {
   type: 'visual';
