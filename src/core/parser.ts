@@ -136,13 +136,13 @@ export function validateLesson(lesson: LessonDefinition): ValidationIssue[] {
     if (!isText(scene.narration)) error(`${base}.narration`, 'is required');
     if (scene.type === 'code' && !isText(scene.code)) error(`${base}.code`, 'is required');
     if (scene.type === 'diagram' && (!scene.nodes?.length || !Array.isArray(scene.edges))) error(base, 'diagram requires nodes and edges');
-    if (scene.type === 'visual' && !['timeline', 'browser-download', 'installer', 'extensions', 'open-folder', 'open-chat', 'agent-work', 'browser-page', 'prompt-anatomy', 'model-picker', 'usage-panel', 'frontend', 'backend', 'database', 'docker', 'app-preview', 'prompt-flow', 'choices', 'swagger-mock', 'task-board', 'url-anatomy', 'request-flow', 'memory-list', 'vscode', 'async-lanes', 'table-relation'].includes(scene.visual)) error(`${base}.visual`, 'is invalid');
+    if (scene.type === 'visual' && !['timeline', 'browser-download', 'installer', 'extensions', 'open-folder', 'open-chat', 'agent-work', 'browser-page', 'prompt-anatomy', 'model-picker', 'usage-panel', 'frontend', 'backend', 'database', 'docker', 'app-preview', 'prompt-flow', 'choices', 'swagger-mock', 'task-board', 'url-anatomy', 'request-flow', 'memory-list', 'vscode', 'async-lanes', 'table-relation', 'screenshot', 'hub', 'annotated-screenshot', 'jsx-preview'].includes(scene.visual)) error(`${base}.visual`, 'is invalid');
     if (scene.type === 'code') for (const entry of scene.focus ?? []) {
       const at = Array.isArray(entry) ? undefined : entry.at;
       if (at && !scene.narration.includes(at)) error(`${base}.focus`, `"${at}" is not part of the narration`);
     }
     if (scene.type === 'visual') {
-      for (const phrase of [...(scene.items ?? []).map((item) => item.at), ...(scene.stepAt ?? [])]) {
+      for (const phrase of [...(scene.items ?? []).map((item) => item.at), ...(scene.stepAt ?? []), scene.openAt]) {
         if (phrase && !scene.narration.includes(phrase)) error(`${base}.at`, `"${phrase}" is not part of the narration`);
       }
     }
@@ -171,6 +171,11 @@ export function validateLesson(lesson: LessonDefinition): ValidationIssue[] {
       if (!isText(exercise.notice) || !isText(exercise.consentLabel) || !isText(exercise.copyText)) {
         error(base, 'authorization exercise requires notice, consentLabel, and copyText');
       }
+    } else if (exercise.type === 'playground') {
+      if (!isText(exercise.starter) || !exercise.checks?.length) error(base, 'playground exercise requires starter code and checks');
+      exercise.checks?.forEach((check, checkIndex) => {
+        if (!isText(check.name) || !isText(check.expression)) error(`${base}.checks[${checkIndex}]`, 'name and expression are required');
+      });
     } else if (exercise.type !== 'checkpoint') {
       error(`${base}.type`, 'is invalid');
     }

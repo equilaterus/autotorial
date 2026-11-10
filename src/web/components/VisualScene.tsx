@@ -2,7 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {VisualItem, VisualScene as VisualSceneData} from '../../core/types';
 import {currentPhase, phraseStarts} from './sync';
-import {codeSpans, csharpSpans, VSCODE_THEME, type CodeTheme} from './csharp';
+import {AUTOTORIAL_THEME, codeSpans, csharpSpans, VSCODE_THEME, type CodeTheme} from './csharp';
 
 const c = {bg: '#141413', panel: '#242421', raised: '#2c2c28', text: '#f0eee6', muted: '#a8a79f', border: '#3a3a36', accent: '#d97757', soft: '#e8a78f', code: '#10100f', ok: '#a8c49a', blue: '#4a90d9'};
 const mono = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
@@ -28,20 +28,33 @@ function useSyncedIndex(narration: string | undefined, phrases: Array<string | u
   return Math.min(count - 1, Math.floor(interpolate(p, [evenFrom, evenTo], [0, count], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})));
 }
 
+/** Whether each narration phrase has already been reached (phrases that are not in the narration count as not reached). */
+function useReached(narration: string | undefined, phrases: Array<string | undefined>): boolean[] {
+  const {p} = useStage();
+  const {durationInFrames, fps} = useVideoConfig();
+  return phrases.map((phrase) => {
+    if (!phrase) return true;
+    const start = phraseStarts(narration ?? '', [phrase], durationInFrames / fps)?.[0];
+    return start !== undefined && p >= start;
+  });
+}
+
 const Title = ({children}: {children: React.ReactNode}) => <h1 style={{fontWeight: 500, letterSpacing: '-.035em', fontSize: 50, margin: '0 0 28px'}}>{children}</h1>;
 const spread = (n: number, from = 0.08, to = 0.8) => (i: number) => from + (n <= 1 ? 0 : (i / (n - 1)) * (to - from));
 
 function Timeline({items, plain}: {items: VisualItem[]; plain?: boolean}) {
   const {show} = useStage();
   const at = spread(items.length);
-  return <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 22, marginTop: 30}}>
+  // Six or more steps do not fit at full size: shrink them so the row stays inside the frame.
+  const dense = items.length > 5;
+  return <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: dense ? 8 : 22, marginTop: 30}}>
     {items.map((item, i) => <React.Fragment key={item.label}>
-      <div style={{...show(at(i)), width: 230, textAlign: 'center', padding: '34px 16px', ...(plain ? {} : {borderRadius: 18, background: c.panel, border: `1px solid ${i === items.length - 1 ? c.accent : c.border}`})}}>
-        <div style={{fontSize: 84}}>{item.icon}</div>
-        <div style={{fontSize: 27, marginTop: 14, lineHeight: 1.25}}>{item.label}</div>
-        {item.detail && <div style={{fontSize: 19, color: c.muted, marginTop: 8}}>{item.detail}</div>}
+      <div style={{...show(at(i)), width: dense ? undefined : 230, flex: dense ? '1 1 0' : undefined, minWidth: 0, textAlign: 'center', padding: dense ? '24px 6px' : '34px 16px', ...(plain ? {} : {borderRadius: 18, background: c.panel, border: `1px solid ${i === items.length - 1 ? c.accent : c.border}`})}}>
+        <div style={{fontSize: dense ? 60 : 84}}>{item.icon}</div>
+        <div style={{fontSize: dense ? 22 : 27, marginTop: 14, lineHeight: 1.25}}>{item.label}</div>
+        {item.detail && <div style={{fontSize: dense ? 16 : 19, color: c.muted, marginTop: 8}}>{item.detail}</div>}
       </div>
-      {i < items.length - 1 && <span style={{...show(at(i) + 0.03), fontSize: 46, color: c.accent}}>→</span>}
+      {i < items.length - 1 && <span style={{...show(at(i) + 0.03), fontSize: dense ? 32 : 46, color: c.accent, flex: 'none'}}>→</span>}
     </React.Fragment>)}
   </div>;
 }
@@ -536,42 +549,58 @@ function UrlAnatomy({items, steps = [], narration}: {items: VisualItem[]; steps?
 }
 
 /** Request flow: the request travels frontend -> backend -> database and the response comes back. items = 3 nodes; steps = captions for the 5 phases. */
-function RequestFlow({items, steps = [], stepAt, cards, narration}: {items: VisualItem[]; steps?: string[]; stepAt?: string[]; cards?: VisualItem[]; narration?: string}) {
-  const {show} = useStage();
-  const raw = useSyncedIndex(narration, stepAt ?? [], Math.max(5, steps.length), 0.08, 0.95);
+function RequestFlow({items, steps = [], stepAt, cards, narration, packets}: {items: VisualItem[]; steps?: string[]; stepAt?: string[]; cards?: VisualItem[]; narration?: string; packets?: string[]}) {
+  const {p, show} = useStage();
+  const {durationInFrames, fps} = useVideoConfig();
+  const count = Math.max(5, steps.length);
+  const starts = phraseStarts(narration ?? '', stepAt ?? [], durationInFrames / fps) ?? Array.from({length: count}, (_, i) => 0.08 + (i / count) * 0.87);
+  const raw = currentPhase(starts, p);
   const started = raw >= 0;
   const phase = Math.max(0, raw);
-  const lit = (i: number) => started && phase >= i;
-  const arrow = (on: boolean, text: string, back: boolean) => <div style={{textAlign: 'center', opacity: on ? 1 : 0.22, color: on ? c.accent : c.muted}}>
-    <div style={{fontSize: 22, minHeight: 28}}>{text}</div>
-    <div style={{fontSize: 46, lineHeight: 1}}>{back ? '←' : '→'}</div>
-  </div>;
-  const topLabels = ['Petición HTTP', 'Consulta'], bottomLabels = ['Respuesta HTTP', 'Datos'];
-  const active = [[0, 1], [1, 2], [1, 2], [0, 1], [0], [1]][phase] ?? [];
+  // How far the current phase has gone (0..1): moves the packet along its arrow.
+  const end = starts[phase + 1] ?? 1;
+  const local = started ? Math.min(1, Math.max(0, (p - starts[phase]) / Math.max(0.02, (end - starts[phase]) * 0.7))) : 0;
+  const labels = packets ?? ['Petición HTTP', 'Consulta', 'Datos', 'Respuesta JSON'];
+  // Arrow of each phase: [column gap, direction]; phases after 3 have no arrow.
+  const arrows: Array<[number, 'right' | 'left']> = [[0, 'right'], [1, 'right'], [1, 'left'], [0, 'left']];
+  const nodeOn = [[0], [1], [2], [1], [0], [1]][phase] ?? [];
+  const arrow = (gap: number, dir: 'right' | 'left', label: string, index: number) => {
+    const current = started && phase === index;
+    const done = started && phase > index;
+    const x = dir === 'right' ? local : 1 - local;
+    return <div style={{position: 'relative', height: 58}}>
+      <div style={{position: 'absolute', left: 0, right: 0, top: 28, height: 4, borderRadius: 2, background: current ? c.accent : done ? '#d9775766' : c.border}}/>
+      <div style={{position: 'absolute', top: 12, [dir === 'right' ? 'right' : 'left']: -6, fontSize: 30, lineHeight: 1, color: current ? c.accent : done ? '#d9775799' : c.border}}>{dir === 'right' ? '▶' : '◀'}</div>
+      {current && <div style={{position: 'absolute', top: 14, left: `calc(${x * 100}% * 0.6 + 20% - 60px)`, width: 120, textAlign: 'center'}}>
+        <span style={{display: 'inline-block', padding: '4px 10px', borderRadius: 999, background: c.accent, color: '#201713', fontSize: 17, fontWeight: 700, whiteSpace: 'nowrap', fontFamily: mono}}>{label}</span>
+      </div>}
+      <div style={{position: 'absolute', left: 0, right: 0, top: dir === 'right' ? -6 : 40, textAlign: 'center', fontSize: 17, color: current ? c.soft : c.muted, opacity: current ? 0 : done ? 1 : 0.5}}>{label}</div>
+    </div>;
+  };
   return <div style={{marginTop: 20}}>
-    <div style={{display: 'grid', gridTemplateColumns: '1fr 170px 1fr 170px 1fr', alignItems: 'center', gap: 6}}>
+    <div style={{display: 'grid', gridTemplateColumns: '1fr 200px 1fr 200px 1fr', alignItems: 'center', gap: 6}}>
       {items.map((item, i) => {
-        const on = started && active.includes(i);
+        const on = started && nodeOn.includes(i);
         return <React.Fragment key={item.label}>
-          <div style={{...show(0.02 + i * 0.03), textAlign: 'center', padding: '18px 8px', borderRadius: 16, background: on ? '#28211e' : c.panel, border: `1px solid ${on ? c.accent : c.border}`}}>
+          <div style={{...show(0.02 + i * 0.03), textAlign: 'center', padding: '18px 8px', borderRadius: 16, background: on ? '#28211e' : c.panel, border: `${on ? 2 : 1}px solid ${on ? c.accent : c.border}`}}>
             <div style={{fontSize: 70}}>{item.icon}</div>
             <div style={{fontSize: 28, marginTop: 6}}>{item.label}</div>
             {item.detail && <div style={{fontSize: 18, color: c.muted, marginTop: 4}}>{item.detail}</div>}
           </div>
-          {i < items.length - 1 && <div style={{display: 'grid', gap: 14}}>
-            {arrow(lit(i), topLabels[i], false)}
-            {arrow(lit(i === 0 ? 3 : 2), bottomLabels[i], true)}
+          {i < items.length - 1 && <div style={{display: 'grid', gap: 26, padding: '0 10px'}}>
+            {arrows.map(([gap, dir], index) => gap === i && dir === 'right' ? <React.Fragment key={index}>{arrow(gap, dir, labels[index], index)}</React.Fragment> : null)}
+            {arrows.map(([gap, dir], index) => gap === i && dir === 'left' ? <React.Fragment key={index}>{arrow(gap, dir, labels[index], index)}</React.Fragment> : null)}
           </div>}
         </React.Fragment>;
       })}
     </div>
-    {phase >= 5 && cards && <div style={{display: 'grid', gridTemplateColumns: '1fr 170px 1fr 170px 1fr', marginTop: 18}}>
+    {phase >= 5 && cards && <div style={{display: 'grid', gridTemplateColumns: '1fr 200px 1fr 200px 1fr', marginTop: 18}}>
       <div/><div/>
       <div style={{...show(0.7), display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center'}}>
         {cards.map((card) => <span key={card.label} style={{padding: '8px 16px', borderRadius: 10, background: '#28211e', border: `1px solid ${c.accent}`, fontSize: 24}}>{card.icon} {card.label}</span>)}
       </div>
     </div>}
-    <div style={{marginTop: 34, textAlign: 'center', fontSize: 32, color: c.soft, minHeight: 44}}>{started ? steps[phase] : ''}</div>
+    <div style={{marginTop: 34, textAlign: 'center', fontSize: 32, color: c.soft, minHeight: 44}}>{started ? `${phase + 1}. ${steps[phase] ?? ''}` : ''}</div>
   </div>;
 }
 
@@ -599,10 +628,14 @@ function MemoryList({items, narration}: {items: VisualItem[]; narration?: string
 /** VS Code look-alike: explorer tree (items; value = depth), the open file's tab and its code. stepAt = phrases that emphasize explorer, tab and editor. */
 function CodeEditorScene({scene}: {scene: VisualSceneData}) {
   const {show} = useStage();
-  const items = scene.items ?? [];
-  const open = scene.focus ?? 0;
-  const file = items[open]?.label ?? 'Archivo.cs';
-  const lines = (scene.code ?? '').split('\n');
+  const allItems = scene.items ?? [];
+  const reached = useReached(scene.narration, [...allItems.map((item) => item.at), scene.openAt]);
+  const opened = !!scene.openAt && reached[allItems.length];
+  const openIndex = opened ? scene.openFocus ?? scene.focus ?? 0 : scene.focus ?? 0;
+  const items = allItems.map((item, index) => ({item, index})).filter(({index}) => reached[index]);
+  const file = allItems[openIndex]?.label ?? 'Archivo.cs';
+  const lines = ((opened ? scene.openCode : scene.code) ?? '').split('\n');
+  const compact = items.length > 12;
   const phase = useSyncedIndex(scene.narration, scene.stepAt ?? [], 3, 0.1, 0.9);
   const ring = (region: number): React.CSSProperties => phase === region ? {boxShadow: `inset 0 0 0 2px ${c.accent}`} : {};
   const sans = 'Segoe UI, system-ui, sans-serif';
@@ -615,7 +648,7 @@ function CodeEditorScene({scene}: {scene: VisualSceneData}) {
       <div style={{width: 46, background: '#333333', display: 'grid', alignContent: 'start', justifyItems: 'center', gap: 16, paddingTop: 14, fontSize: 22}}><span>📄</span><span style={{opacity: 0.5}}>🔍</span><span style={{opacity: 0.5}}>🧩</span></div>
       <div style={{width: 300, background: '#252526', padding: '10px 0', ...ring(0)}}>
         <div style={{fontSize: 13, letterSpacing: 1, padding: '0 16px 8px', color: '#bbbbbb'}}>EXPLORADOR</div>
-        {items.map((item, i) => <div key={`${item.label}${i}`} style={{...show(0.02 + i * 0.015), display: 'flex', alignItems: 'center', gap: 8, padding: `4px 12px 4px ${14 + (item.value ?? 0) * 18}px`, fontSize: 18, background: i === open ? '#37373d' : 'transparent', color: i === open ? '#ffffff' : '#cccccc'}}>
+        {items.map(({item, index}, i) => <div key={`${item.label}${index}`} style={{...show(0.02 + i * 0.015), display: 'flex', alignItems: 'center', gap: 8, padding: `${compact ? 2 : 4}px 12px ${compact ? 2 : 4}px ${14 + (item.value ?? 0) * 18}px`, fontSize: compact ? 16 : 18, background: index === openIndex ? '#37373d' : 'transparent', color: index === openIndex ? '#ffffff' : '#cccccc', outline: index === openIndex && opened ? `2px solid ${c.accent}` : 'none', outlineOffset: -2}}>
           <span style={{fontSize: 15}}>{item.icon}</span>{item.label}
         </div>)}
       </div>
@@ -624,7 +657,7 @@ function CodeEditorScene({scene}: {scene: VisualSceneData}) {
           <div style={{display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', background: '#1e1e1e', borderTop: '2px solid #007acc', fontSize: 17, color: '#ffffff'}}><span style={{color: '#5db85c', fontWeight: 700}}>#</span>{file}</div>
         </div>
         <div style={{padding: '10px 0', ...ring(2)}}>
-          <pre style={{margin: 0, fontFamily: mono, fontSize: 20, lineHeight: '30px', color: VSCODE_THEME.plain}}>
+          <pre style={{margin: 0, fontFamily: mono, fontSize: lines.length > 13 ? 16 : 20, lineHeight: lines.length > 13 ? '24px' : '30px', color: VSCODE_THEME.plain}}>
             {lines.map((line, i) => <div key={i} style={{display: 'flex', whiteSpace: 'pre'}}><span style={{width: 56, flex: 'none', textAlign: 'right', paddingRight: 22, color: '#858585'}}>{i + 1}</span><span>{line ? csharpSpans(line, VSCODE_THEME) : ' '}</span></div>)}
           </pre>
         </div>
@@ -698,6 +731,106 @@ function TableRelation({items, steps = [], stepAt, narration}: {items: VisualIte
       <div style={{fontSize: 40, lineHeight: 1}}>1 ──── N</div>
     </div>
     {table(items[1], phase >= 1)}
+  </div>;
+}
+
+/** A real screenshot of the app (items[0].image, in lessons/<slug>/assets/) inside a browser window; header = URL. */
+function Screenshot({items, header}: {items: VisualItem[]; header?: string}) {
+  const slug = React.useContext(CoverContext);
+  const {show} = useStage();
+  const image = items[0]?.image;
+  return <div style={{...show(0.02), borderRadius: 12, overflow: 'hidden', boxShadow: '0 24px 70px #0007', background: '#fff'}}>
+    <div style={{display: 'flex', alignItems: 'center', gap: 12, padding: '10px 18px', background: '#dee1e6'}}>
+      {['#ef6b5f', '#e5c06a', '#7bc67e'].map((color) => <span key={color} style={{width: 13, height: 13, borderRadius: '50%', background: color}}/>)}
+      <span style={{flex: 1, marginLeft: 10, padding: '6px 18px', borderRadius: 999, background: '#fff', fontFamily: mono, fontSize: 20, color: '#555'}}>{header ?? 'http://localhost:5173'}</span>
+    </div>
+    {image && <Img src={staticFile(`lesson-assets/${slug}/${image}`)} alt={items[0]?.label ?? ''} style={{display: 'block', width: '100%'}}/>}
+  </div>;
+}
+
+/** Hub: items[0] is the center (for example a shared context) and the other items use it; each one lights up at its narration phrase (at). */
+function Hub({items, narration}: {items: VisualItem[]; narration?: string}) {
+  const phase = useSyncedIndex(narration, items.map((item) => item.at), items.length, 0.08, 0.9);
+  const [center, ...spokes] = items;
+  const box = (item: VisualItem, on: boolean, big = false) => <div style={{textAlign: 'center', padding: big ? '18px 26px' : '14px 12px', borderRadius: 14, background: on ? '#28211e' : c.panel, border: `${big ? 2 : 1}px solid ${on ? c.accent : c.border}`, opacity: phase < 0 || on || big ? 1 : 0.45}}>
+    <div style={{fontSize: big ? 46 : 36}}>{item.icon}</div>
+    <div style={{fontSize: big ? 30 : 23, fontWeight: 600, marginTop: 4}}>{item.label}</div>
+    {item.detail && <div style={{fontSize: big ? 19 : 17, color: c.muted, marginTop: 4, fontFamily: mono}}>{item.detail}</div>}
+  </div>;
+  return <div style={{display: 'grid', gap: 18, marginTop: 6}}>
+    <div style={{display: 'flex', justifyContent: 'center'}}><div style={{minWidth: 380}}>{center && box(center, phase >= 0, true)}</div></div>
+    <div style={{display: 'grid', gridTemplateColumns: `repeat(${spokes.length}, 1fr)`, gap: 14}}>
+      {spokes.map((item, i) => <div key={item.label}>
+        <div style={{textAlign: 'center', fontSize: 30, color: phase >= i + 1 ? c.accent : c.border, lineHeight: 1}}>↕</div>
+        {box(item, phase >= i + 1)}
+      </div>)}
+    </div>
+  </div>;
+}
+
+/** A real screenshot (cards[0].image) with boxes that mark parts of the screen: items (label, detail, area = [x, y, w, h] %), each revealed at its phrase (at). */
+function AnnotatedScreenshot({scene}: {scene: VisualSceneData}) {
+  const slug = React.useContext(CoverContext);
+  const items = scene.items ?? [];
+  const phase = useSyncedIndex(scene.narration, items.map((item) => item.at), items.length, 0.08, 0.9);
+  const image = scene.cards?.[0]?.image;
+  return <div style={{borderRadius: 12, overflow: 'hidden', boxShadow: '0 24px 70px #0007', background: '#fff'}}>
+    <div style={{display: 'flex', alignItems: 'center', gap: 12, padding: '10px 18px', background: '#dee1e6'}}>
+      {['#ef6b5f', '#e5c06a', '#7bc67e'].map((color) => <span key={color} style={{width: 13, height: 13, borderRadius: '50%', background: color}}/>)}
+      <span style={{flex: 1, marginLeft: 10, padding: '6px 18px', borderRadius: 999, background: '#fff', fontFamily: mono, fontSize: 20, color: '#555'}}>{scene.header ?? 'http://localhost:5173'}</span>
+    </div>
+    <div style={{position: 'relative'}}>
+      {image && <Img src={staticFile(`lesson-assets/${slug}/${image}`)} alt="" style={{display: 'block', width: '100%'}}/>}
+      {items.map((item, i) => {
+        if (i > phase || !item.area) return null;
+        const [x, y, w, h] = item.area;
+        const current = i === phase;
+        // value (label position): 0 above left, 1 above right, 2 below left, 3 inside top left, 4 inside bottom right, 5 below right
+        const place = item.value ?? 0;
+        const tags: React.CSSProperties[] = [
+          {left: -2, top: -2, transform: 'translateY(-100%)'},
+          {right: -2, top: -2, transform: 'translateY(-100%)'},
+          {left: -2, bottom: -2, transform: 'translateY(100%)'},
+          {left: 6, top: 6},
+          {right: 6, bottom: 6},
+          {right: -2, bottom: -2, transform: 'translateY(100%)'},
+        ];
+        const tag = tags[place] ?? tags[0];
+        return <div key={item.label} style={{position: 'absolute', left: `${x}%`, top: `${y}%`, width: `${w}%`, height: `${h}%`, border: `${current ? 4 : 2}px solid ${current ? c.accent : '#d9775799'}`, borderRadius: 10, boxShadow: current ? '0 0 0 4000px #00000022' : 'none'}}>
+          <span style={{position: 'absolute', ...tag, padding: '3px 10px', borderRadius: 8, background: current ? c.accent : '#d97757cc', color: '#fff', fontFamily: mono, fontSize: 18, fontWeight: 700, whiteSpace: 'nowrap'}}>{item.label}</span>
+        </div>;
+      })}
+    </div>
+  </div>;
+}
+
+/** A small component next to what it renders: code (jsx) on the left, html in a browser on the right. focusLines[i] lights lines at stepAt[i]; the browser shows the result from the last phase. */
+function JsxPreview({scene}: {scene: VisualSceneData}) {
+  const phrases = scene.stepAt ?? [];
+  const phase = useSyncedIndex(scene.narration, phrases, Math.max(1, phrases.length), 0.1, 0.9);
+  const lit = phase >= 0 ? scene.focusLines?.[phase] ?? [] : [];
+  const note = phase >= 0 ? scene.notes?.[phase] ?? '' : '';
+  const lines = (scene.code ?? '').split('\n');
+  const rendered = scene.showResult === 'start' || phase >= phrases.length - 1;
+  const slug = React.useContext(CoverContext);
+  const image = scene.cards?.[0]?.image;
+  const widest = Math.max(...lines.map((line) => line.length));
+  const ratio = image ? 1.8 : 1.45;
+  const codeWidth = (1140 - 28) * ratio / (ratio + 1) - 62;
+  const fontSize = Math.max(14, Math.min(26, Math.floor(430 / (lines.length * 1.55)), Math.floor(codeWidth / (0.6 * widest))));
+  return <div style={{display: 'grid', gridTemplateColumns: `${ratio}fr 1fr`, gap: 28, alignItems: 'center'}}>
+    <pre style={{margin: 0, padding: 24, borderRadius: 14, background: c.code, border: `1px solid ${c.border}`, fontFamily: mono, fontSize, lineHeight: 1.55, color: AUTOTORIAL_THEME.plain}}>
+      {lines.map((line, i) => <div key={i} style={{whiteSpace: 'pre', padding: '0 10px', background: lit.includes(i + 1) ? '#d9775722' : 'transparent', borderLeft: `4px solid ${lit.includes(i + 1) ? c.accent : 'transparent'}`, opacity: lit.length && !lit.includes(i + 1) ? 0.6 : 1}}>{line ? codeSpans(line, 'javascript') : ' '}{note && i + 1 === lit[0] && <span style={{marginLeft: 14, padding: '2px 12px', borderRadius: 999, background: c.accent, color: '#201713', fontWeight: 700, fontFamily: '"Space Grotesk", system-ui, sans-serif'}}>← {note}</span>}</div>)}
+    </pre>
+    <div style={{borderRadius: 12, overflow: 'hidden', boxShadow: '0 24px 70px #0007', background: '#fff', opacity: rendered ? 1 : 0.25}}>
+      <div style={{display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', background: '#dee1e6'}}>
+        {['#ef6b5f', '#e5c06a', '#7bc67e'].map((color) => <span key={color} style={{width: 12, height: 12, borderRadius: '50%', background: color}}/>)}
+        <span style={{marginLeft: 8, fontSize: 18, color: '#555', fontFamily: mono}}>Así se ve</span>
+      </div>
+      {image
+        ? <div style={{padding: 18, background: '#f4f1ea'}}>{rendered && <Img src={staticFile(`lesson-assets/${slug}/${image}`)} alt="" style={{display: 'block', width: '100%'}}/>}</div>
+        : <div style={{padding: '22px 26px', minHeight: 200, color: '#222', fontFamily: 'system-ui, sans-serif', fontSize: 26}} dangerouslySetInnerHTML={{__html: rendered ? scene.html ?? '' : ''}}/>}
+    </div>
   </div>;
 }
 
@@ -858,9 +991,13 @@ export function VisualScene({scene, slug}: {scene: VisualSceneData; slug: string
     : scene.visual === 'swagger-mock' ? <SwaggerMock scene={scene}/>
     : scene.visual === 'task-board' ? <TaskBoard items={items}/>
     : scene.visual === 'url-anatomy' ? <UrlAnatomy items={items} steps={scene.steps} narration={scene.narration}/>
-    : scene.visual === 'request-flow' ? <RequestFlow items={items} steps={scene.steps} stepAt={scene.stepAt} cards={scene.cards} narration={scene.narration}/>
+    : scene.visual === 'request-flow' ? <RequestFlow items={items} steps={scene.steps} stepAt={scene.stepAt} cards={scene.cards} narration={scene.narration} packets={scene.packets}/>
     : scene.visual === 'memory-list' ? <MemoryList items={items} narration={scene.narration}/>
     : scene.visual === 'vscode' ? <CodeEditorScene scene={scene}/>
+    : scene.visual === 'annotated-screenshot' ? <AnnotatedScreenshot scene={scene}/>
+    : scene.visual === 'jsx-preview' ? <JsxPreview scene={scene}/>
+    : scene.visual === 'hub' ? <Hub items={items} narration={scene.narration}/>
+    : scene.visual === 'screenshot' ? <Screenshot items={items} header={scene.header}/>
     : scene.visual === 'table-relation' ? <TableRelation items={items} steps={scene.steps} stepAt={scene.stepAt} narration={scene.narration}/>
     : scene.visual === 'async-lanes' ? <AsyncLanes items={items} steps={scene.steps} stepAt={scene.stepAt} narration={scene.narration}/>
     : <Choices items={items}/>;

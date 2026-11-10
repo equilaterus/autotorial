@@ -3,10 +3,16 @@ import type {Exercise} from '../../core/types';
 import type {ExecutionResult} from '../../core/executor';
 import {runInSandbox} from './Sandbox';
 import {CodeEditor} from './CodeEditor';
+import {PlaygroundPanel} from './Playground';
 import {csharpSession, type CSharpRunResult} from './CSharpRunner';
 import {composeCSharp, sameOutput} from '../../core/csharp';
 
 export function ExercisePanel({exercise, onComplete, label = 'Práctica interactiva', done = false}: {exercise: Exercise; onComplete: () => void; label?: string; done?: boolean}) {
+  if (exercise.type === 'playground') return <PlaygroundPanel exercise={exercise} onComplete={onComplete} label={label}/>;
+  return <ChallengePanel exercise={exercise} onComplete={onComplete} label={label} done={done}/>;
+}
+
+function ChallengePanel({exercise, onComplete, label, done}: {exercise: Exclude<Exercise, {type: 'playground'}>; onComplete: () => void; label: string; done: boolean}) {
   const [choice, setChoice] = useState<number | undefined>(done && (exercise.type === 'multiple-choice' || exercise.type === 'output-prediction') ? exercise.answer : undefined);
   const [code, setCode] = useState(exercise.type === 'code-completion' ? exercise.starter : '');
   const [result, setResult] = useState<ExecutionResult>();
@@ -59,7 +65,7 @@ export function ExercisePanel({exercise, onComplete, label = 'Práctica interact
       {checked && <p className="pass">{exercise.explanation}</p>}
     </section>;
   }
-  return <section className="exercise" aria-label={label}><span className="eyebrow">{label}</span><h2>{exercise.prompt}</h2>
+  return <section className="exercise" aria-label={label}><span className="eyebrow">{label}</span>{exercise.title ? <><h2>{exercise.title}</h2><p className="exercise-description">{exercise.prompt}</p></> : <h2>{exercise.prompt}</h2>}
     {exercise.type === 'code-completion' ? <><CodeEditor value={code} onChange={setCode} language={exercise.language === 'csharp' ? 'csharp' : 'javascript'} label={exercise.language === 'csharp' ? 'C# editor' : 'JavaScript editor'}/><button onClick={execute} disabled={!!busy}>{busy ? 'Ejecutando…' : 'Ejecutar pruebas'}</button>{busy && <p className="hint">{busy}</p>}{result && <ul className="test-results">{result.tests.map((test) => <li key={test.name} className={test.passed ? 'pass' : 'fail'}>{test.passed ? '✓' : '×'} {test.name}{!test.passed && (test.error ? ` — ${test.error}` : ` — esperado ${JSON.stringify(test.expected)}, recibido ${JSON.stringify(test.actual)}`)}</li>)}</ul>}{error && <p className="fail">{error}</p>}</>
       : isCopyExercise ? <div className="copy-prompt">
         {exercise.type === 'authorization' && <><p className="authorization-notice">{exercise.notice}</p><label className="consent"><input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)}/><span>{exercise.consentLabel}</span></label></>}
